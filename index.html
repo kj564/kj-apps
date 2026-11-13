@@ -339,8 +339,10 @@
     flex-shrink: 0;
     box-shadow: 0 10px 26px -10px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.25);
   }
-  .app-icon svg { width: 27px; height: 27px; display: block; stroke: #fff; }
+  .app-icon svg, .app-icon img { width: 100%; height: 100%; display: block; }
+  .app-icon img { object-fit: cover; border-radius: inherit; }
 
+  /* Real app icons — keep gradients as fallback glow ring */
   .icon-wordcraft {
     background: linear-gradient(140deg, #a855f7 0%, #d946ef 50%, #ec4899 100%);
   }
@@ -582,13 +584,7 @@
         <a class="card" href="./wordcraft/" aria-label="Open WordCraft">
           <div class="card-top">
             <span class="app-icon icon-wordcraft" aria-hidden="true">
-              <!-- pen / pencil icon -->
-              <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M12 19l7-7 3 3-7 7-3-3z"/>
-                <path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z"/>
-                <path d="M2 2l7.586 7.586"/>
-                <circle cx="11" cy="11" r="2"/>
-              </svg>
+              <img src="./assets/wordcraft.png" alt="" />
             </span>
             <span class="badge badge-new">New</span>
           </div>
@@ -607,12 +603,7 @@
         <a class="card" href="https://kj564.github.io/Nobar/" target="_blank" rel="noopener" aria-label="Open Nobar">
           <div class="card-top">
             <span class="app-icon icon-nobar" aria-hidden="true">
-              <!-- film / play icon -->
-              <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <rect x="2" y="4" width="20" height="16" rx="2"/>
-                <path d="M2 8h20M7 4v4M17 4v4"/>
-                <path d="M10 12l4 2.5-4 2.5z" fill="#fff" stroke="none"/>
-              </svg>
+              <img src="./assets/nobar.png" alt="" />
             </span>
             <span class="badge badge-new">New</span>
           </div>
@@ -631,11 +622,7 @@
         <a class="card" href="https://kj564.github.io/VuCall/" target="_blank" rel="noopener" aria-label="Open VuCall">
           <div class="card-top">
             <span class="app-icon icon-vucall" aria-hidden="true">
-              <!-- video camera icon -->
-              <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <rect x="2" y="6" width="14" height="12" rx="2"/>
-                <path d="M22 8l-6 4 6 4z"/>
-              </svg>
+              <img src="./assets/vucall.svg" alt="" />
             </span>
             <span class="badge badge-new">New</span>
           </div>
