@@ -493,6 +493,8 @@
         iframe.addEventListener('load', () => {
           setTimeout(() => loading.classList.add('hidden'), 200);
         });
+        // Fallback: hide loading after 8s (cross-origin iframe 'load' event can be unreliable)
+        setTimeout(() => loading.classList.add('hidden'), 8000);
 
         // Controls
         el.querySelector('.win-btn.min').addEventListener('click', e => {
