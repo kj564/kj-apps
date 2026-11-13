@@ -1,0 +1,3 @@
+# Treat WASM as binary (don't try to diff/merge)
+*.wasm binary
+*.ico binary
