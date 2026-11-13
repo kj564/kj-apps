@@ -1,712 +1,813 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<meta name="description" content="KJ Apps — a collection of small, fast web tools. Small tools, big productivity." />
-<title>KJ Apps — Small tools, big productivity.</title>
-
-<!-- Inter font (only external runtime dep) -->
-<link rel="preconnect" href="https://fonts.googleapis.com" />
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-
-<style>
-  /* =========================================================
-     KJ Apps — Launcher Homepage
-     Pure CSS. No frameworks. No build step.
-     ========================================================= */
-  :root {
-    /* Surfaces */
-    --bg-0: #020617;          /* slate-950 */
-    --bg-1: #060b1d;
-    --surface: rgba(255, 255, 255, 0.035);
-    --surface-2: rgba(255, 255, 255, 0.06);
-    --surface-hover: rgba(255, 255, 255, 0.08);
-    --border: rgba(255, 255, 255, 0.08);
-    --border-strong: rgba(255, 255, 255, 0.16);
-
-    /* Text */
-    --text-1: #f8fafc;        /* slate-50 */
-    --text-2: #cbd5e1;        /* slate-300 */
-    --text-3: #94a3b8;        /* slate-400 */
-    --text-4: #64748b;        /* slate-500 */
-
-    /* Accents */
-    --purple: #a855f7;
-    --pink: #ec4899;
-    --blue: #3b82f6;
-    --cyan: #22d3ee;
-    --green: #34d399;
-
-    /* Glow */
-    --glow-purple: rgba(168, 85, 247, 0.45);
-    --glow-pink: rgba(236, 72, 153, 0.40);
-
-    /* Layout */
-    --maxw: 1180px;
-    --radius: 20px;
-    --radius-sm: 12px;
-    --ease: cubic-bezier(0.22, 1, 0.36, 1);
-
-    /* Font */
-    --font: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
-  }
-
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-
-  html { scroll-behavior: smooth; -webkit-text-size-adjust: 100%; }
-
-  body {
-    font-family: var(--font);
-    background: var(--bg-0);
-    color: var(--text-1);
-    line-height: 1.55;
-    min-height: 100vh;
-    -webkit-font-smoothing: antialiased;
-    -moz-osx-font-smoothing: grayscale;
-    overflow-x: hidden;
-    position: relative;
-  }
-
-  /* Ambient background orbs */
-  .bg-orbs {
-    position: fixed;
-    inset: 0;
-    z-index: -1;
-    overflow: hidden;
-    pointer-events: none;
-  }
-  .orb {
-    position: absolute;
-    border-radius: 50%;
-    filter: blur(90px);
-    opacity: 0.55;
-    will-change: transform;
-  }
-  .orb-1 {
-    width: 520px; height: 520px;
-    background: radial-gradient(circle, rgba(168,85,247,0.55), transparent 65%);
-    top: -180px; left: -120px;
-    animation: float1 22s var(--ease) infinite alternate;
-  }
-  .orb-2 {
-    width: 460px; height: 460px;
-    background: radial-gradient(circle, rgba(59,130,246,0.45), transparent 65%);
-    top: 10%; right: -160px;
-    animation: float2 26s var(--ease) infinite alternate;
-  }
-  .orb-3 {
-    width: 420px; height: 420px;
-    background: radial-gradient(circle, rgba(236,72,153,0.40), transparent 65%);
-    bottom: -160px; left: 30%;
-    animation: float3 30s var(--ease) infinite alternate;
-  }
-  @keyframes float1 { to { transform: translate(80px, 60px) scale(1.1); } }
-  @keyframes float2 { to { transform: translate(-60px, 80px) scale(1.08); } }
-  @keyframes float3 { to { transform: translate(40px, -50px) scale(1.12); } }
-
-  /* Subtle grid texture */
-  body::before {
-    content: "";
-    position: fixed;
-    inset: 0;
-    z-index: -1;
-    background-image:
-      linear-gradient(rgba(255,255,255,0.022) 1px, transparent 1px),
-      linear-gradient(90deg, rgba(255,255,255,0.022) 1px, transparent 1px);
-    background-size: 56px 56px;
-    mask-image: radial-gradient(ellipse 80% 60% at 50% 0%, #000 40%, transparent 100%);
-    -webkit-mask-image: radial-gradient(ellipse 80% 60% at 50% 0%, #000 40%, transparent 100%);
-    pointer-events: none;
-  }
-
-  .wrap {
-    width: 100%;
-    max-width: var(--maxw);
-    margin: 0 auto;
-    padding: 0 20px;
-  }
-
-  /* ===================== Header ===================== */
-  header {
-    position: sticky;
-    top: 0;
-    z-index: 50;
-    backdrop-filter: saturate(180%) blur(16px);
-    -webkit-backdrop-filter: saturate(180%) blur(16px);
-    background: rgba(2, 6, 23, 0.6);
-    border-bottom: 1px solid var(--border);
-  }
-  .nav {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    height: 64px;
-  }
-  .brand {
-    display: flex;
-    align-items: center;
-    gap: 11px;
-    text-decoration: none;
-    color: var(--text-1);
-  }
-  .brand-mark {
-    width: 34px; height: 34px;
-    display: grid; place-items: center;
-    border-radius: 10px;
-    background: linear-gradient(135deg, var(--purple), var(--pink) 55%, var(--blue));
-    box-shadow: 0 6px 20px -6px var(--glow-purple);
-  }
-  .brand-mark svg { width: 19px; height: 19px; display: block; }
-  .brand-name {
-    font-weight: 700;
-    font-size: 17px;
-    letter-spacing: -0.02em;
-  }
-  .brand-name span {
-    background: linear-gradient(135deg, #fff 30%, #cbd5e1);
-    -webkit-background-clip: text;
-    background-clip: text;
-    -webkit-text-fill-color: transparent;
-  }
-  .nav-links {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-  }
-  .nav-link {
-    display: inline-flex;
-    align-items: center;
-    gap: 7px;
-    padding: 8px 14px;
-    border-radius: 999px;
-    color: var(--text-2);
-    text-decoration: none;
-    font-size: 13.5px;
-    font-weight: 500;
-    border: 1px solid transparent;
-    transition: all 0.2s var(--ease);
-  }
-  .nav-link:hover {
-    color: var(--text-1);
-    background: var(--surface-2);
-    border-color: var(--border);
-  }
-  .nav-link svg { width: 15px; height: 15px; }
-
-  /* ===================== Hero ===================== */
-  .hero {
-    padding: 84px 0 44px;
-    text-align: center;
-  }
-  .pill {
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    padding: 6px 13px 6px 8px;
-    border-radius: 999px;
-    background: var(--surface-2);
-    border: 1px solid var(--border);
-    font-size: 12.5px;
-    color: var(--text-2);
-    font-weight: 500;
-    margin-bottom: 26px;
-  }
-  .pill .dot {
-    width: 7px; height: 7px;
-    border-radius: 50%;
-    background: var(--green);
-    box-shadow: 0 0 10px var(--green);
-    animation: pulse 2.4s ease-in-out infinite;
-  }
-  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.45} }
-
-  .hero h1 {
-    font-size: clamp(34px, 6.5vw, 58px);
-    line-height: 1.05;
-    letter-spacing: -0.035em;
-    font-weight: 800;
-    margin-bottom: 18px;
-  }
-  .hero h1 .grad {
-    background: linear-gradient(120deg, var(--purple) 0%, var(--pink) 45%, #f0abfc 75%, var(--blue) 100%);
-    -webkit-background-clip: text;
-    background-clip: text;
-    -webkit-text-fill-color: transparent;
-  }
-  .hero p {
-    font-size: clamp(15px, 2.2vw, 18px);
-    color: var(--text-3);
-    max-width: 560px;
-    margin: 0 auto 8px;
-  }
-
-  /* ===================== Section head ===================== */
-  .section-head {
-    display: flex;
-    align-items: baseline;
-    justify-content: space-between;
-    margin: 56px 0 24px;
-    gap: 16px;
-    flex-wrap: wrap;
-  }
-  .section-head h2 {
-    font-size: 13px;
-    text-transform: uppercase;
-    letter-spacing: 0.14em;
-    color: var(--text-4);
-    font-weight: 600;
-  }
-  .section-head .count {
-    font-size: 13px;
-    color: var(--text-4);
-    font-weight: 500;
-  }
-
-  /* ===================== Apps grid ===================== */
-  .grid {
-    display: grid;
-    grid-template-columns: 1fr;
-    gap: 18px;
-    padding-bottom: 80px;
-  }
-
-  .card {
-    position: relative;
-    display: flex;
-    flex-direction: column;
-    padding: 26px 24px 22px;
-    border-radius: var(--radius);
-    background: var(--surface);
-    border: 1px solid var(--border);
-    text-decoration: none;
-    color: inherit;
-    overflow: hidden;
-    transition: transform 0.35s var(--ease), border-color 0.35s var(--ease), background 0.35s var(--ease), box-shadow 0.35s var(--ease);
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
-    isolation: isolate;
-  }
-  .card::before {
-    /* glow ring on hover */
-    content: "";
-    position: absolute;
-    inset: -1px;
-    border-radius: var(--radius);
-    padding: 1px;
-    background: linear-gradient(135deg, rgba(168,85,247,0.7), rgba(236,72,153,0.6), rgba(59,130,246,0.5));
-    -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
-    -webkit-mask-composite: xor;
-            mask-composite: exclude;
-    opacity: 0;
-    transition: opacity 0.35s var(--ease);
-    z-index: -1;
-  }
-  .card::after {
-    /* top sheen */
-    content: "";
-    position: absolute;
-    top: 0; left: 0; right: 0;
-    height: 1px;
-    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.18), transparent);
-    opacity: 0.7;
-  }
-  .card:hover {
-    transform: translateY(-6px);
-    background: var(--surface-hover);
-    box-shadow: 0 24px 50px -20px rgba(0,0,0,0.6), 0 0 40px -12px var(--glow-purple);
-  }
-  .card:hover::before { opacity: 1; }
-  .card:active { transform: translateY(-3px); }
-  .card:focus-visible {
-    outline: 2px solid var(--purple);
-    outline-offset: 3px;
-  }
-
-  .card-top {
-    display: flex;
-    align-items: flex-start;
-    justify-content: space-between;
-    margin-bottom: 18px;
-  }
-
-  .app-icon {
-    width: 56px; height: 56px;
-    border-radius: 16px;
-    display: grid;
-    place-items: center;
-    flex-shrink: 0;
-    box-shadow: 0 10px 26px -10px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.25);
-  }
-  .app-icon svg, .app-icon img { width: 100%; height: 100%; display: block; }
-  .app-icon img { object-fit: cover; border-radius: inherit; }
-
-  /* Real app icons — keep gradients as fallback glow ring */
-  .icon-wordcraft {
-    background: linear-gradient(140deg, #a855f7 0%, #d946ef 50%, #ec4899 100%);
-  }
-  .icon-nobar {
-    background: linear-gradient(140deg, #f97316 0%, #ef4444 50%, #db2777 100%);
-  }
-  .icon-vucall {
-    background: linear-gradient(140deg, #06b6d4 0%, #3b82f6 50%, #6366f1 100%);
-  }
-  .icon-soon {
-    background: linear-gradient(140deg, #475569 0%, #64748b 100%);
-    box-shadow: 0 6px 18px -8px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.08);
-  }
-
-  .badge {
-    display: inline-flex;
-    align-items: center;
-    gap: 5px;
-    padding: 4px 10px;
-    border-radius: 999px;
-    font-size: 11px;
-    font-weight: 600;
-    letter-spacing: 0.02em;
-    border: 1px solid var(--border);
-  }
-  .badge-new {
-    background: rgba(52, 211, 153, 0.12);
-    color: #6ee7b7;
-    border-color: rgba(52, 211, 153, 0.28);
-  }
-  .badge-new::before {
-    content: "";
-    width: 5px; height: 5px;
-    border-radius: 50%;
-    background: var(--green);
-    box-shadow: 0 0 8px var(--green);
-  }
-  .badge-soon {
-    background: rgba(148, 163, 184, 0.10);
-    color: var(--text-3);
-    border-color: rgba(148, 163, 184, 0.22);
-  }
-
-  .card-name {
-    font-size: 20px;
-    font-weight: 700;
-    letter-spacing: -0.02em;
-    margin-bottom: 7px;
-    color: var(--text-1);
-  }
-  .card-desc {
-    font-size: 14px;
-    color: var(--text-3);
-    line-height: 1.55;
-    margin-bottom: 20px;
-    flex: 1;
-  }
-
-  .card-foot {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 12px;
-    margin-top: auto;
-  }
-  .cat {
-    font-size: 12px;
-    color: var(--text-4);
-    font-weight: 500;
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-  }
-  .cat::before {
-    content: "";
-    width: 4px; height: 4px;
-    border-radius: 50%;
-    background: var(--text-4);
-  }
-
-  .open-btn {
-    display: inline-flex;
-    align-items: center;
-    gap: 7px;
-    padding: 8px 14px;
-    border-radius: 10px;
-    font-size: 13px;
-    font-weight: 600;
-    background: var(--surface-2);
-    border: 1px solid var(--border);
-    color: var(--text-1);
-    transition: all 0.25s var(--ease);
-  }
-  .open-btn svg { width: 14px; height: 14px; transition: transform 0.25s var(--ease); }
-  .card:hover .open-btn {
-    background: linear-gradient(135deg, var(--purple), var(--pink));
-    border-color: transparent;
-    box-shadow: 0 8px 22px -8px var(--glow-purple);
-  }
-  .card:hover .open-btn svg { transform: translate(2px, -2px); }
-
-  /* Disabled / coming-soon card */
-  .card.is-soon {
-    cursor: default;
-  }
-  .card.is-soon:hover {
-    transform: translateY(-4px);
-    box-shadow: 0 18px 40px -22px rgba(0,0,0,0.5);
-  }
-  .card.is-soon:hover::before { opacity: 0; }
-  .card.is-soon .open-btn {
-    background: transparent;
-    color: var(--text-4);
-    cursor: default;
-  }
-  .card.is-soon:hover .open-btn {
-    background: var(--surface-2);
-    box-shadow: none;
-  }
-
-  /* ===================== Footer ===================== */
-  footer {
-    border-top: 1px solid var(--border);
-    padding: 28px 0;
-    margin-top: 20px;
-  }
-  .foot {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 14px;
-    flex-wrap: wrap;
-  }
-  .foot p {
-    font-size: 13px;
-    color: var(--text-4);
-  }
-  .foot a {
-    color: var(--text-3);
-    text-decoration: none;
-    font-size: 13px;
-    font-weight: 500;
-    display: inline-flex;
-    align-items: center;
-    gap: 7px;
-    transition: color 0.2s var(--ease);
-  }
-  .foot a:hover { color: var(--text-1); }
-  .foot a svg { width: 16px; height: 16px; }
-
-  /* ===================== Responsive ===================== */
-  @media (min-width: 600px) {
-    .grid { grid-template-columns: repeat(2, 1fr); }
-  }
-  @media (min-width: 1024px) {
-    .grid { grid-template-columns: repeat(3, 1fr); gap: 20px; }
-    .hero { padding: 110px 0 60px; }
-    .card { padding: 30px 28px 26px; }
-  }
-  @media (min-width: 1440px) {
-    .grid { grid-template-columns: repeat(4, 1fr); }
-    .wrap { padding: 0 32px; }
-  }
-
-  @media (max-width: 520px) {
-    .nav-link span { display: none; }
-    .nav-link { padding: 8px; }
-    .hero { padding: 60px 0 36px; }
-    .card { padding: 22px 20px 20px; }
-    .app-icon { width: 50px; height: 50px; }
-  }
-
-  /* Respect reduced motion */
-  @media (prefers-reduced-motion: reduce) {
-    *, *::before, *::after {
-      animation-duration: 0.001ms !important;
-      animation-iteration-count: 1 !important;
-      transition-duration: 0.001ms !important;
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>KJ Apps — Desktop</title>
+  <link rel="icon" href="./assets/wordcraft.png" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-0: #08080c;
+      --bg-1: #14141c;
+      --bg-2: #1c1c28;
+      --text-1: #f1f5f9;
+      --text-2: #94a3b8;
+      --text-3: #64748b;
+      --accent: #6366f1;
+      --border: rgba(255,255,255,0.08);
+      --border-strong: rgba(255,255,255,0.14);
+      --window-bg: rgba(20, 20, 28, 0.92);
+      --window-shadow: 0 30px 80px -20px rgba(0,0,0,0.8), 0 0 0 1px rgba(255,255,255,0.06);
+      --glass: blur(20px) saturate(180%);
     }
-  }
-</style>
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    html, body {
+      width: 100%; height: 100%; overflow: hidden;
+      background: var(--bg-0);
+      color: var(--text-1);
+      font-family: 'Inter', system-ui, -apple-system, sans-serif;
+      user-select: none;
+      -webkit-user-select: none;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    /* Desktop wallpaper */
+    .desktop {
+      position: fixed; inset: 0;
+      background:
+        radial-gradient(circle at 15% 20%, rgba(99, 102, 241, 0.18), transparent 35%),
+        radial-gradient(circle at 85% 75%, rgba(236, 72, 153, 0.14), transparent 35%),
+        radial-gradient(circle at 50% 50%, rgba(6, 182, 212, 0.08), transparent 50%),
+        linear-gradient(135deg, #08080c 0%, #14141c 50%, #1c1c28 100%);
+      overflow: hidden;
+      z-index: 0;
+    }
+    .desktop::before {
+      content: ''; position: absolute; inset: 0;
+      background-image:
+        radial-gradient(circle at 1px 1px, rgba(255,255,255,0.025) 1px, transparent 0);
+      background-size: 32px 32px;
+      pointer-events: none;
+    }
+
+    /* Top menubar */
+    .menubar {
+      position: fixed; top: 0; left: 0; right: 0; height: 32px;
+      background: rgba(0, 0, 0, 0.45);
+      backdrop-filter: var(--glass);
+      -webkit-backdrop-filter: var(--glass);
+      border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0 14px;
+      z-index: 10000;
+      font-size: 13px;
+    }
+    .menubar-left { display: flex; align-items: center; gap: 4px; }
+    .menubar-brand {
+      font-weight: 700; font-size: 13px; letter-spacing: -0.01em;
+      padding: 4px 10px; border-radius: 6px; cursor: pointer;
+      transition: background 0.15s;
+    }
+    .menubar-brand:hover { background: rgba(255,255,255,0.08); }
+    .menubar-item {
+      padding: 4px 10px; border-radius: 6px; cursor: pointer;
+      color: var(--text-1); font-weight: 500;
+      transition: background 0.15s;
+    }
+    .menubar-item:hover { background: rgba(255,255,255,0.08); }
+    .menubar-right { display: flex; align-items: center; gap: 14px; color: var(--text-2); font-size: 12px; }
+    .menubar-right .clock { color: var(--text-1); font-weight: 500; font-variant-numeric: tabular-nums; }
+
+    /* Launchpad */
+    .launchpad {
+      position: fixed; inset: 32px 0 56px 0;
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      padding: 40px 20px;
+      z-index: 1;
+      transition: opacity 0.3s ease, transform 0.3s ease;
+    }
+    .launchpad.hidden {
+      opacity: 0; pointer-events: none; transform: scale(1.04);
+    }
+
+    .launchpad-hero { text-align: center; margin-bottom: 56px; }
+    .launchpad-hero h1 {
+      font-size: clamp(32px, 5vw, 52px);
+      font-weight: 800; letter-spacing: -0.03em;
+      background: linear-gradient(135deg, #fff 0%, #94a3b8 100%);
+      -webkit-background-clip: text; background-clip: text; color: transparent;
+      margin-bottom: 10px;
+    }
+    .launchpad-hero p { color: var(--text-2); font-size: 15px; font-weight: 400; }
+
+    /* App grid (launchpad) */
+    .app-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+      gap: 20px;
+      max-width: 720px;
+      width: 100%;
+    }
+    .app-tile {
+      display: flex; flex-direction: column; align-items: center; gap: 10px;
+      padding: 18px 8px 14px; border-radius: 16px;
+      cursor: pointer; transition: all 0.18s ease;
+      background: transparent; border: none; color: inherit;
+      font-family: inherit;
+    }
+    .app-tile:hover { background: rgba(255,255,255,0.04); transform: translateY(-2px); }
+    .app-tile:active { transform: translateY(0); }
+    .app-tile:disabled { cursor: default; opacity: 0.5; }
+    .app-tile:disabled:hover { background: transparent; transform: none; }
+
+    .tile-icon {
+      width: 68px; height: 68px; border-radius: 16px;
+      overflow: hidden; position: relative;
+      box-shadow: 0 12px 30px -8px rgba(0,0,0,0.55), inset 0 1px 0 rgba(255,255,255,0.12);
+      display: grid; place-items: center;
+      transition: box-shadow 0.2s;
+    }
+    .app-tile:hover .tile-icon {
+      box-shadow: 0 18px 40px -10px rgba(0,0,0,0.7), inset 0 1px 0 rgba(255,255,255,0.16);
+    }
+    .tile-icon img { width: 100%; height: 100%; object-fit: cover; display: block; }
+    .tile-icon.gradient-fallback {
+      background: linear-gradient(140deg, var(--g1, #475569), var(--g2, #64748b));
+    }
+    .tile-icon svg { width: 32px; height: 32px; stroke: #fff; }
+
+    .tile-name { font-size: 13px; font-weight: 500; color: var(--text-1); text-align: center; }
+    .tile-badge {
+      position: absolute; top: -4px; right: -4px;
+      font-size: 9px; padding: 2px 6px; border-radius: 4px;
+      background: rgba(52, 211, 153, 0.25); color: #6ee7b7;
+      font-weight: 700; letter-spacing: 0.02em;
+      border: 1px solid rgba(52, 211, 153, 0.3);
+    }
+    .tile-badge.soon {
+      background: rgba(148, 163, 184, 0.15); color: var(--text-2);
+      border-color: var(--border);
+    }
+    .tile-badge-wrap { position: relative; }
+
+    /* Window */
+    .window {
+      position: absolute;
+      background: var(--window-bg);
+      backdrop-filter: var(--glass);
+      -webkit-backdrop-filter: var(--glass);
+      border-radius: 12px;
+      box-shadow: var(--window-shadow);
+      display: flex; flex-direction: column;
+      overflow: hidden;
+      min-width: 320px; min-height: 240px;
+      border: 1px solid rgba(255,255,255,0.08);
+      transition: opacity 0.2s, transform 0.2s;
+    }
+    .window.maximized {
+      top: 32px !important; left: 0 !important;
+      width: 100% !important; height: calc(100% - 88px) !important;
+      border-radius: 0; border: none;
+    }
+    .window.minimized {
+      opacity: 0; transform: scale(0.6) translateY(100vh); pointer-events: none;
+    }
+    .window-titlebar {
+      height: 38px; flex-shrink: 0;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0 14px;
+      background: rgba(0, 0, 0, 0.35);
+      border-bottom: 1px solid var(--border);
+      cursor: grab;
+    }
+    .window-titlebar:active { cursor: grabbing; }
+    .window-title {
+      display: flex; align-items: center; gap: 8px;
+      font-size: 13px; font-weight: 600; color: var(--text-1);
+      pointer-events: none;
+    }
+    .window-title img { width: 16px; height: 16px; border-radius: 3px; object-fit: cover; }
+    .window-controls { display: flex; gap: 8px; align-items: center; }
+    .win-btn {
+      width: 13px; height: 13px; border-radius: 50%;
+      border: none; cursor: pointer;
+      display: grid; place-items: center;
+      transition: filter 0.12s;
+      padding: 0;
+    }
+    .win-btn:hover { filter: brightness(1.2); }
+    .win-btn.min { background: #fbbf24; }
+    .win-btn.max { background: #34d399; }
+    .win-btn.close { background: #f87171; }
+    .win-btn svg { width: 7px; height: 7px; opacity: 0; transition: opacity 0.12s; }
+    .window-controls:hover .win-btn svg { opacity: 1; }
+
+    .window-body { flex: 1; position: relative; overflow: hidden; background: #fff; }
+    .window-body iframe {
+      width: 100%; height: 100%; border: none; display: block;
+      background: #fff;
+    }
+    .window-resize {
+      position: absolute; bottom: 0; right: 0;
+      width: 18px; height: 18px;
+      cursor: nwse-resize;
+      z-index: 10;
+    }
+    .window-resize::after {
+      content: ''; position: absolute; bottom: 4px; right: 4px;
+      width: 8px; height: 8px;
+      border-right: 2px solid rgba(255,255,255,0.3);
+      border-bottom: 2px solid rgba(255,255,255,0.3);
+      border-radius: 0 0 2px 0;
+    }
+
+    .window-loading {
+      position: absolute; inset: 0;
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      gap: 12px;
+      background: var(--bg-1);
+      color: var(--text-2);
+      font-size: 13px;
+      pointer-events: none;
+      transition: opacity 0.3s;
+      z-index: 1;
+    }
+    .window-loading.hidden { opacity: 0; }
+    .window-loading .spinner {
+      width: 24px; height: 24px;
+      border: 2px solid rgba(255,255,255,0.1);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* Taskbar */
+    .taskbar {
+      position: fixed; bottom: 0; left: 0; right: 0; height: 56px;
+      background: rgba(0, 0, 0, 0.55);
+      backdrop-filter: var(--glass);
+      -webkit-backdrop-filter: var(--glass);
+      border-top: 1px solid var(--border);
+      display: flex; align-items: center; gap: 8px;
+      padding: 0 12px;
+      z-index: 10000;
+    }
+    .taskbar-launchpad {
+      width: 40px; height: 40px; border-radius: 10px;
+      background: linear-gradient(135deg, #6366f1, #8b5cf6);
+      display: grid; place-items: center;
+      cursor: pointer; transition: filter 0.15s, transform 0.15s;
+      border: none; flex-shrink: 0;
+    }
+    .taskbar-launchpad:hover { filter: brightness(1.15); }
+    .taskbar-launchpad:active { transform: scale(0.95); }
+    .taskbar-launchpad svg { width: 20px; height: 20px; stroke: #fff; }
+    .taskbar-launchpad.active { background: linear-gradient(135deg, #8b5cf6, #ec4899); }
+
+    .taskbar-divider { width: 1px; height: 24px; background: var(--border); margin: 0 4px; flex-shrink: 0; }
+    .taskbar-items { display: flex; gap: 6px; flex: 1; overflow-x: auto; scrollbar-width: none; }
+    .taskbar-items::-webkit-scrollbar { display: none; }
+    .taskbar-item {
+      height: 40px; padding: 0 12px;
+      display: flex; align-items: center; gap: 8px;
+      background: rgba(255,255,255,0.05);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      cursor: pointer; transition: all 0.15s;
+      font-size: 13px; color: var(--text-1);
+      white-space: nowrap; flex-shrink: 0;
+    }
+    .taskbar-item:hover { background: rgba(255,255,255,0.1); }
+    .taskbar-item.active {
+      background: rgba(99, 102, 241, 0.18);
+      border-color: rgba(99, 102, 241, 0.4);
+    }
+    .taskbar-item.minimized { opacity: 0.6; }
+    .taskbar-item img { width: 18px; height: 18px; border-radius: 3px; object-fit: cover; }
+
+    .taskbar-clock {
+      font-size: 13px; color: var(--text-1);
+      font-variant-numeric: tabular-nums;
+      text-align: right; line-height: 1.2;
+      padding: 0 8px; flex-shrink: 0;
+      cursor: pointer;
+    }
+    .taskbar-clock .date { font-size: 10px; color: var(--text-2); }
+
+    /* Mobile */
+    @media (max-width: 768px) {
+      .menubar { height: 28px; font-size: 12px; padding: 0 10px; }
+      .menubar-item { padding: 3px 8px; font-size: 12px; }
+      .launchpad { inset: 28px 0 52px 0; padding: 20px 16px; }
+      .launchpad-hero { margin-bottom: 28px; }
+      .app-grid { grid-template-columns: repeat(auto-fill, minmax(90px, 1fr)); gap: 14px; }
+      .tile-icon { width: 56px; height: 56px; border-radius: 13px; }
+      .tile-name { font-size: 12px; }
+      .taskbar { height: 52px; padding: 0 8px; gap: 6px; }
+      .taskbar-launchpad { width: 36px; height: 36px; }
+      .taskbar-item { padding: 0 10px; height: 36px; font-size: 12px; }
+      .window { min-width: 100% !important; min-height: 100% !important; }
+      .window:not(.maximized) {
+        top: 28px !important; left: 0 !important;
+        width: 100% !important; height: calc(100% - 80px) !important;
+        border-radius: 0;
+      }
+      .win-btn { width: 12px; height: 12px; }
+    }
+
+    /* Tooltip */
+    .menubar-item[data-tip]:hover::after {
+      content: attr(data-tip);
+      position: absolute; top: 100%; left: 50%; transform: translateX(-50%);
+      background: rgba(0,0,0,0.9); color: #fff;
+      padding: 4px 8px; border-radius: 4px; font-size: 11px;
+      white-space: nowrap; pointer-events: none; z-index: 99999;
+      margin-top: 4px;
+    }
+  </style>
 </head>
 <body>
+  <div class="desktop"></div>
 
-  <!-- Ambient background -->
-  <div class="bg-orbs" aria-hidden="true">
-    <div class="orb orb-1"></div>
-    <div class="orb orb-2"></div>
-    <div class="orb orb-3"></div>
-  </div>
-
-  <!-- Header -->
-  <header>
-    <div class="wrap nav">
-      <a class="brand" href="/" aria-label="KJ Apps home">
-        <span class="brand-mark" aria-hidden="true">
-          <!-- KJ monogram -->
-          <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M6 4v16" />
-            <path d="M6 12l7-8" />
-            <path d="M6 12l7 8" />
-            <path d="M15 14a3 3 0 0 0 3 3" />
-          </svg>
-        </span>
-        <span class="brand-name"><span>KJ Apps</span></span>
-      </a>
-      <nav class="nav-links" aria-label="Primary">
-        <a class="nav-link" href="#apps">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>
-          <span>Apps</span>
-        </a>
-        <a class="nav-link" href="https://github.com/kj564/kj-apps" target="_blank" rel="noopener">
-          <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 .5C5.7.5.5 5.7.5 12c0 5.1 3.3 9.4 7.9 10.9.6.1.8-.3.8-.6v-2c-3.2.7-3.9-1.5-3.9-1.5-.5-1.3-1.3-1.7-1.3-1.7-1.1-.7.1-.7.1-.7 1.2.1 1.8 1.2 1.8 1.2 1 1.8 2.7 1.3 3.4 1 .1-.8.4-1.3.7-1.6-2.6-.3-5.3-1.3-5.3-5.8 0-1.3.5-2.3 1.2-3.1-.1-.3-.5-1.5.1-3.1 0 0 1-.3 3.3 1.2 1-.3 2-.4 3-.4s2 .1 3 .4c2.3-1.5 3.3-1.2 3.3-1.2.6 1.6.2 2.8.1 3.1.8.8 1.2 1.8 1.2 3.1 0 4.5-2.7 5.5-5.3 5.8.4.4.8 1.1.8 2.2v3.3c0 .3.2.7.8.6 4.6-1.5 7.9-5.8 7.9-10.9C23.5 5.7 18.3.5 12 .5z"/></svg>
-          <span>GitHub</span>
-        </a>
-      </nav>
+  <!-- Top menubar -->
+  <header class="menubar">
+    <div class="menubar-left">
+      <div class="menubar-brand" id="brand" title="KJ Apps">KJ Apps</div>
+      <div class="menubar-item" id="menu-apps" data-tip="Open Launchpad">Apps</div>
+      <div class="menubar-item" id="menu-close-all" data-tip="Close all windows">Close All</div>
+    </div>
+    <div class="menubar-right">
+      <span class="clock" id="menubar-clock">--:--</span>
     </div>
   </header>
 
-  <main class="wrap">
+  <!-- Launchpad -->
+  <div class="launchpad" id="launchpad">
+    <div class="launchpad-hero">
+      <h1>KJ Apps</h1>
+      <p>Small tools, big productivity.</p>
+    </div>
+    <div class="app-grid" id="app-grid"></div>
+  </div>
 
-    <!-- Hero -->
-    <section class="hero">
-      <span class="pill"><span class="dot"></span> Live · Hosted on GitHub Pages</span>
-      <h1>Small tools,<br><span class="grad">big productivity.</span></h1>
-      <p>A growing collection of tiny, fast web apps — no signups, no trackers, just open and go. Built with the vanilla web.</p>
-    </section>
+  <!-- Windows container -->
+  <div id="windows-container"></div>
 
-    <!-- Apps -->
-    <section id="apps" aria-labelledby="apps-title">
-      <div class="section-head">
-        <h2 id="apps-title">Apps</h2>
-        <span class="count" id="app-count">3 available · 1 coming soon</span>
-      </div>
-
-      <div class="grid" id="apps-grid">
-
-        <!-- Card: WordCraft -->
-        <a class="card" href="./wordcraft/" aria-label="Open WordCraft">
-          <div class="card-top">
-            <span class="app-icon icon-wordcraft" aria-hidden="true">
-              <img src="./assets/wordcraft.png" alt="" />
-            </span>
-            <span class="badge badge-new">New</span>
-          </div>
-          <h3 class="card-name">WordCraft</h3>
-          <p class="card-desc">Markdown editor with live word count, focus mode, and local save. Craft your words.</p>
-          <div class="card-foot">
-            <span class="cat">Writing</span>
-            <span class="open-btn">
-              Open
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17L17 7"/><path d="M7 7h10v10"/></svg>
-            </span>
-          </div>
-        </a>
-
-        <!-- Card: Nobar -->
-        <a class="card" href="https://kj564.github.io/Nobar/" target="_blank" rel="noopener" aria-label="Open Nobar">
-          <div class="card-top">
-            <span class="app-icon icon-nobar" aria-hidden="true">
-              <img src="./assets/nobar.png" alt="" />
-            </span>
-            <span class="badge badge-new">New</span>
-          </div>
-          <h3 class="card-name">Nobar</h3>
-          <p class="card-desc">Streaming film indie Indonesia. Tonton bareng, jaga jarak.</p>
-          <div class="card-foot">
-            <span class="cat">Entertainment</span>
-            <span class="open-btn">
-              Open
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17L17 7"/><path d="M7 7h10v10"/></svg>
-            </span>
-          </div>
-        </a>
-
-        <!-- Card: VuCall -->
-        <a class="card" href="https://kj564.github.io/VuCall/" target="_blank" rel="noopener" aria-label="Open VuCall">
-          <div class="card-top">
-            <span class="app-icon icon-vucall" aria-hidden="true">
-              <img src="./assets/vucall.svg" alt="" />
-            </span>
-            <span class="badge badge-new">New</span>
-          </div>
-          <h3 class="card-name">VuCall</h3>
-          <p class="card-desc">Video call 1:1 untuk pasangan LDR. Lebih dekat meski berjauhan.</p>
-          <div class="card-foot">
-            <span class="cat">Communication</span>
-            <span class="open-btn">
-              Open
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17L17 7"/><path d="M7 7h10v10"/></svg>
-            </span>
-          </div>
-        </a>
-
-        <!-- Card: Coming Soon (placeholder) -->
-        <div class="card is-soon" role="listitem" aria-label="More apps coming soon">
-          <div class="card-top">
-            <span class="app-icon icon-soon" aria-hidden="true">
-              <!-- sparkles icon -->
-              <svg viewBox="0 0 24 24" fill="none" stroke="#cbd5e1" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M12 3l1.8 4.6L18.5 9l-4.7 1.4L12 15l-1.8-4.6L5.5 9l4.7-1.4L12 3z"/>
-                <path d="M5 16l.8 2L8 18.8 6 19.6 5.2 22 4 19.6 2 18.8 4 18 5 16z"/>
-                <path d="M19 14l.6 1.6L21 16.2l-1.4.6L19 18.4l-.6-1.6L17 16.2l1.4-.6L19 14z"/>
-              </svg>
-            </span>
-            <span class="badge badge-soon">Soon</span>
-          </div>
-          <h3 class="card-name" style="color: var(--text-2);">Coming Soon</h3>
-          <p class="card-desc">More apps coming soon. Stay tuned.</p>
-          <div class="card-foot">
-            <span class="cat">—</span>
-            <span class="open-btn">
-              Soon
-            </span>
-          </div>
-        </div>
-
-      </div>
-    </section>
-  </main>
-
-  <!-- Footer -->
-  <footer>
-    <div class="wrap foot">
-      <p>© <span id="year">2024</span> KJ Apps · Built with vanilla web</p>
-      <a href="https://github.com/kj564/kj-apps" target="_blank" rel="noopener">
-        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 .5C5.7.5.5 5.7.5 12c0 5.1 3.3 9.4 7.9 10.9.6.1.8-.3.8-.6v-2c-3.2.7-3.9-1.5-3.9-1.5-.5-1.3-1.3-1.7-1.3-1.7-1.1-.7.1-.7.1-.7 1.2.1 1.8 1.2 1.8 1.2 1 1.8 2.7 1.3 3.4 1 .1-.8.4-1.3.7-1.6-2.6-.3-5.3-1.3-5.3-5.8 0-1.3.5-2.3 1.2-3.1-.1-.3-.5-1.5.1-3.1 0 0 1-.3 3.3 1.2 1-.3 2-.4 3-.4s2 .1 3 .4c2.3-1.5 3.3-1.2 3.3-1.2.6 1.6.2 2.8.1 3.1.8.8 1.2 1.8 1.2 3.1 0 4.5-2.7 5.5-5.3 5.8.4.4.8 1.1.8 2.2v3.3c0 .3.2.7.8.6 4.6-1.5 7.9-5.8 7.9-10.9C23.5 5.7 18.3.5 12 .5z"/></svg>
-        View source on GitHub
-      </a>
+  <!-- Taskbar -->
+  <footer class="taskbar">
+    <button class="taskbar-launchpad" id="launchpad-toggle" title="Toggle Launchpad">
+      <svg viewBox="0 0 24 24" fill="none" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="3" y="3" width="7" height="7"/>
+        <rect x="14" y="3" width="7" height="7"/>
+        <rect x="3" y="14" width="7" height="7"/>
+        <rect x="14" y="14" width="7" height="7"/>
+      </svg>
+    </button>
+    <div class="taskbar-divider"></div>
+    <div class="taskbar-items" id="taskbar-items"></div>
+    <div class="taskbar-clock" id="taskbar-clock">
+      <div class="time" id="taskbar-time">--:--</div>
+      <div class="date" id="taskbar-date">---</div>
     </div>
   </footer>
 
-<script>
-  // Year auto-update
-  document.getElementById('year').textContent = new Date().getFullYear();
+  <script>
+    // ─── App definitions ───────────────────────────────────────────
+    const APPS = {
+      wordcraft: {
+        name: 'WordCraft',
+        icon: './assets/wordcraft.png',
+        url: './wordcraft/',
+        gradient: ['#a855f7', '#d946ef', '#ec4899'],
+        badge: 'New'
+      },
+      nobar: {
+        name: 'Nobar',
+        icon: './assets/nobar.png',
+        url: 'https://kj564.github.io/Nobar/',
+        gradient: ['#f97316', '#ef4444', '#db2777'],
+        badge: 'New'
+      },
+      vucall: {
+        name: 'VuCall',
+        icon: './assets/vucall.svg',
+        url: 'https://kj564.github.io/VuCall/',
+        gradient: ['#06b6d4', '#3b82f6', '#6366f1'],
+        badge: 'New'
+      },
+      soon: {
+        name: 'Coming Soon',
+        icon: null,
+        gradient: ['#475569', '#64748b'],
+        badge: 'Soon',
+        badgeClass: 'soon',
+        disabled: true
+      }
+    };
 
-  // Tiny enhancement: keyboard support for the coming-soon card (no-op, just prevents nav)
-  // Cards are real anchors, so keyboard focus + Enter works natively for WordCraft.
+    // ─── Window Manager ────────────────────────────────────────────
+    const WM = {
+      windows: new Map(),
+      zCounter: 100,
+      winCounter: 0,
+      focused: null,
 
-  // IntersectionObserver: subtle fade-in for cards on load
-  (function () {
-    var cards = document.querySelectorAll('.card');
-    if (!('IntersectionObserver' in window)) {
-      cards.forEach(function (c) { c.style.opacity = '1'; });
-      return;
-    }
-    cards.forEach(function (c) {
-      c.style.opacity = '0';
-      c.style.transform = 'translateY(14px)';
-      c.style.transition = 'opacity 0.6s cubic-bezier(0.22,1,0.36,1), transform 0.6s cubic-bezier(0.22,1,0.36,1), border-color .35s, background .35s, box-shadow .35s';
-    });
-    var io = new IntersectionObserver(function (entries) {
-      entries.forEach(function (e, i) {
-        if (e.isIntersecting) {
-          setTimeout(function () {
-            e.target.style.opacity = '1';
-            e.target.style.transform = 'translateY(0)';
-          }, i * 80);
-          io.unobserve(e.target);
+      openApp(appId) {
+        const app = APPS[appId];
+        if (!app) return;
+
+        // If window for this app already exists, focus/restore it
+        for (const [id, w] of this.windows) {
+          if (w.app === appId) {
+            if (w.minimized) this.restore(id);
+            else this.focus(id);
+            this.hideLaunchpad();
+            return;
+          }
         }
-      });
-    }, { threshold: 0.15 });
-    cards.forEach(function (c) { io.observe(c); });
-  })();
-</script>
+
+        const winId = `win-${++this.winCounter}`;
+        const win = this.createWindow(winId, appId, app);
+        this.windows.set(winId, win);
+        this.focus(winId);
+        this.renderTaskbar();
+        this.hideLaunchpad();
+      },
+
+      createWindow(winId, appId, app) {
+        const container = document.getElementById('windows-container');
+        const el = document.createElement('div');
+        el.className = 'window';
+        el.dataset.id = winId;
+        el.dataset.app = appId;
+
+        // Cascade position
+        const offset = (this.winCounter - 1) % 6 * 28;
+        const maxW = Math.min(960, window.innerWidth - 80);
+        const maxH = Math.min(680, window.innerHeight - 160);
+        el.style.width = maxW + 'px';
+        el.style.height = maxH + 'px';
+        el.style.left = (40 + offset) + 'px';
+        el.style.top = (60 + offset) + 'px';
+
+        el.innerHTML = `
+          <div class="window-titlebar">
+            <div class="window-title">
+              ${app.icon ? `<img src="${app.icon}" alt="">` : ''}
+              <span>${app.name}</span>
+            </div>
+            <div class="window-controls">
+              <button class="win-btn min" title="Minimize" aria-label="Minimize">
+                <svg viewBox="0 0 24 24" fill="none" stroke="#000" stroke-width="3.5" stroke-linecap="round"><path d="M5 12h14"/></svg>
+              </button>
+              <button class="win-btn max" title="Maximize" aria-label="Maximize">
+                <svg viewBox="0 0 24 24" fill="none" stroke="#000" stroke-width="3.5" stroke-linejoin="round"><path d="M5 5h14v14H5z"/></svg>
+              </button>
+              <button class="win-btn close" title="Close" aria-label="Close">
+                <svg viewBox="0 0 24 24" fill="none" stroke="#000" stroke-width="3.5" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>
+              </button>
+            </div>
+          </div>
+          <div class="window-body">
+            <div class="window-loading">
+              <div class="spinner"></div>
+              <div>Loading ${app.name}…</div>
+            </div>
+            <iframe src="${app.url}" allow="fullscreen; clipboard-read; clipboard-write; autoplay; encrypted-media; picture-in-picture" sandbox="allow-scripts allow-same-origin allow-downloads allow-popups allow-forms allow-pointer-lock allow-modals allow-presentation"></iframe>
+          </div>
+          <div class="window-resize"></div>
+        `;
+
+        container.appendChild(el);
+
+        const titlebar = el.querySelector('.window-titlebar');
+        const iframe = el.querySelector('iframe');
+        const loading = el.querySelector('.window-loading');
+
+        iframe.addEventListener('load', () => {
+          setTimeout(() => loading.classList.add('hidden'), 200);
+        });
+
+        // Controls
+        el.querySelector('.win-btn.min').addEventListener('click', e => {
+          e.stopPropagation(); this.minimize(winId);
+        });
+        el.querySelector('.win-btn.max').addEventListener('click', e => {
+          e.stopPropagation(); this.toggleMaximize(winId);
+        });
+        el.querySelector('.win-btn.close').addEventListener('click', e => {
+          e.stopPropagation(); this.close(winId);
+        });
+
+        // Focus on click
+        el.addEventListener('mousedown', () => this.focus(winId));
+        el.addEventListener('touchstart', () => this.focus(winId), { passive: true });
+
+        // Drag
+        this.makeDraggable(el, titlebar);
+
+        // Resize
+        this.makeResizable(el, el.querySelector('.window-resize'));
+
+        // Double-click titlebar to maximize
+        titlebar.addEventListener('dblclick', (e) => {
+          if (e.target.closest('.win-btn')) return;
+          this.toggleMaximize(winId);
+        });
+
+        return { id: winId, app: appId, element: el, minimized: false, maximized: false };
+      },
+
+      focus(winId) {
+        const w = this.windows.get(winId);
+        if (!w) return;
+        w.element.style.zIndex = ++this.zCounter;
+        this.focused = winId;
+        this.renderTaskbar();
+      },
+
+      close(winId) {
+        const w = this.windows.get(winId);
+        if (!w) return;
+        w.element.classList.add('minimized');
+        setTimeout(() => {
+          w.element.remove();
+          this.windows.delete(winId);
+          this.renderTaskbar();
+          if (this.windows.size === 0) this.showLaunchpad();
+        }, 200);
+      },
+
+      minimize(winId) {
+        const w = this.windows.get(winId);
+        if (!w) return;
+        w.element.classList.add('minimized');
+        w.minimized = true;
+        this.renderTaskbar();
+        // If no visible windows, show launchpad
+        let anyVisible = false;
+        for (const [, win] of this.windows) if (!win.minimized) { anyVisible = true; break; }
+        if (!anyVisible) this.showLaunchpad();
+      },
+
+      restore(winId) {
+        const w = this.windows.get(winId);
+        if (!w) return;
+        w.element.classList.remove('minimized');
+        w.minimized = false;
+        this.focus(winId);
+        this.hideLaunchpad();
+      },
+
+      toggleMaximize(winId) {
+        const w = this.windows.get(winId);
+        if (!w) return;
+        if (w.maximized) {
+          w.element.classList.remove('maximized');
+          w.maximized = false;
+        } else {
+          // Save current rect for restore
+          w._prevRect = {
+            left: w.element.style.left,
+            top: w.element.style.top,
+            width: w.element.style.width,
+            height: w.element.style.height
+          };
+          w.element.classList.add('maximized');
+          w.maximized = true;
+        }
+        this.focus(winId);
+      },
+
+      makeDraggable(win, handle) {
+        let dragging = false;
+        let startX, startY, startLeft, startTop;
+
+        const start = (clientX, clientY, e) => {
+          if (e.target.closest('.win-btn')) return;
+          const w = this.windows.get(win.dataset.id);
+          if (w && w.maximized) return;
+          dragging = true;
+          startX = clientX; startY = clientY;
+          startLeft = parseInt(win.style.left) || 0;
+          startTop = parseInt(win.style.top) || 0;
+          win.style.transition = 'none';
+          e.preventDefault();
+        };
+
+        const move = (clientX, clientY) => {
+          if (!dragging) return;
+          const newLeft = Math.max(0, Math.min(window.innerWidth - 80, startLeft + clientX - startX));
+          const newTop = Math.max(32, Math.min(window.innerHeight - 80, startTop + clientY - startY));
+          win.style.left = newLeft + 'px';
+          win.style.top = newTop + 'px';
+        };
+
+        const end = () => {
+          if (dragging) {
+            dragging = false;
+            win.style.transition = '';
+          }
+        };
+
+        handle.addEventListener('mousedown', e => start(e.clientX, e.clientY, e));
+        document.addEventListener('mousemove', e => move(e.clientX, e.clientY));
+        document.addEventListener('mouseup', end);
+
+        handle.addEventListener('touchstart', e => {
+          const t = e.touches[0];
+          start(t.clientX, t.clientY, e);
+        }, { passive: false });
+        document.addEventListener('touchmove', e => {
+          if (!dragging) return;
+          const t = e.touches[0];
+          move(t.clientX, t.clientY);
+        }, { passive: true });
+        document.addEventListener('touchend', end);
+      },
+
+      makeResizable(win, handle) {
+        let resizing = false;
+        let startX, startY, startW, startH;
+
+        const start = (clientX, clientY, e) => {
+          const w = this.windows.get(win.dataset.id);
+          if (w && w.maximized) return;
+          resizing = true;
+          startX = clientX; startY = clientY;
+          startW = win.offsetWidth;
+          startH = win.offsetHeight;
+          win.style.transition = 'none';
+          e.preventDefault();
+          e.stopPropagation();
+        };
+
+        const move = (clientX, clientY) => {
+          if (!resizing) return;
+          const newW = Math.max(320, startW + clientX - startX);
+          const newH = Math.max(240, startH + clientY - startY);
+          win.style.width = newW + 'px';
+          win.style.height = newH + 'px';
+        };
+
+        const end = () => {
+          if (resizing) {
+            resizing = false;
+            win.style.transition = '';
+          }
+        };
+
+        handle.addEventListener('mousedown', e => start(e.clientX, e.clientY, e));
+        document.addEventListener('mousemove', e => move(e.clientX, e.clientY));
+        document.addEventListener('mouseup', end);
+
+        handle.addEventListener('touchstart', e => {
+          const t = e.touches[0];
+          start(t.clientX, t.clientY, e);
+        }, { passive: false });
+        document.addEventListener('touchmove', e => {
+          if (!resizing) return;
+          const t = e.touches[0];
+          move(t.clientX, t.clientY);
+        }, { passive: true });
+        document.addEventListener('touchend', end);
+      },
+
+      renderTaskbar() {
+        const items = document.getElementById('taskbar-items');
+        items.innerHTML = '';
+        for (const [id, w] of this.windows) {
+          const app = APPS[w.app];
+          const item = document.createElement('div');
+          item.className = 'taskbar-item';
+          if (this.focused === id && !w.minimized) item.classList.add('active');
+          if (w.minimized) item.classList.add('minimized');
+          item.innerHTML = `${app.icon ? `<img src="${app.icon}">` : ''}<span>${app.name}</span>`;
+          item.addEventListener('click', () => {
+            if (w.minimized) this.restore(id);
+            else if (this.focused === id) this.minimize(id);
+            else this.focus(id);
+          });
+          items.appendChild(item);
+        }
+      },
+
+      closeAll() {
+        for (const id of Array.from(this.windows.keys())) this.close(id);
+      },
+
+      hideLaunchpad() {
+        document.getElementById('launchpad').classList.add('hidden');
+        document.getElementById('launchpad-toggle').classList.remove('active');
+      },
+
+      showLaunchpad() {
+        document.getElementById('launchpad').classList.remove('hidden');
+        document.getElementById('launchpad-toggle').classList.add('active');
+      },
+
+      toggleLaunchpad() {
+        const lp = document.getElementById('launchpad');
+        const btn = document.getElementById('launchpad-toggle');
+        lp.classList.toggle('hidden');
+        btn.classList.toggle('active', !lp.classList.contains('hidden'));
+      }
+    };
+
+    // ─── Render app grid ───────────────────────────────────────────
+    function renderAppGrid() {
+      const grid = document.getElementById('app-grid');
+      grid.innerHTML = '';
+      for (const [id, app] of Object.entries(APPS)) {
+        const btn = document.createElement('button');
+        btn.className = 'app-tile';
+        if (app.disabled) btn.disabled = true;
+        const grad = app.gradient.join(', ');
+        btn.innerHTML = `
+          <div class="tile-badge-wrap">
+            <div class="tile-icon ${app.icon ? '' : 'gradient-fallback'}" style="${app.icon ? '' : `--g1: ${app.gradient[0]}; --g2: ${app.gradient[app.gradient.length - 1]};`}">
+              ${app.icon
+                ? `<img src="${app.icon}" alt="">`
+                : `<svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l1.8 4.6L18.5 9l-4.7 1.4L12 15l-1.8-4.6L5.5 9l4.7-1.4L12 3z"/></svg>`
+              }
+            </div>
+            ${app.badge ? `<div class="tile-badge ${app.badgeClass || ''}">${app.badge}</div>` : ''}
+          </div>
+          <div class="tile-name">${app.name}</div>
+        `;
+        if (!app.disabled) {
+          // Single click on desktop, double-click feel via slight delay
+          let clickTimer = null;
+          btn.addEventListener('click', () => {
+            if (clickTimer) { clearTimeout(clickTimer); clickTimer = null; return; }
+            clickTimer = setTimeout(() => {
+              WM.openApp(id);
+              clickTimer = null;
+            }, 180);
+          });
+          btn.addEventListener('dblclick', () => {
+            if (clickTimer) { clearTimeout(clickTimer); clickTimer = null; }
+            WM.openApp(id);
+          });
+        }
+        grid.appendChild(btn);
+      }
+    }
+
+    // ─── Clock ──────────────────────────────────────────────────────
+    function updateClock() {
+      const now = new Date();
+      const time = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false });
+      const date = now.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+      document.getElementById('menubar-clock').textContent = time;
+      document.getElementById('taskbar-time').textContent = time;
+      document.getElementById('taskbar-date').textContent = date;
+    }
+
+    // ─── Init ──────────────────────────────────────────────────────
+    renderAppGrid();
+    updateClock();
+    setInterval(updateClock, 1000);
+
+    // Default: launchpad visible
+    document.getElementById('launchpad-toggle').classList.add('active');
+
+    // Menubar handlers
+    document.getElementById('brand').addEventListener('click', () => WM.toggleLaunchpad());
+    document.getElementById('menu-apps').addEventListener('click', () => WM.showLaunchpad());
+    document.getElementById('menu-close-all').addEventListener('click', () => WM.closeAll());
+    document.getElementById('launchpad-toggle').addEventListener('click', () => WM.toggleLaunchpad());
+
+    // Keyboard shortcuts
+    document.addEventListener('keydown', e => {
+      // Cmd/Ctrl + W → close focused window
+      if ((e.metaKey || e.ctrlKey) && e.key === 'w') {
+        e.preventDefault();
+        if (WM.focused) WM.close(WM.focused);
+      }
+      // Cmd/Ctrl + M → minimize focused
+      if ((e.metaKey || e.ctrlKey) && e.key === 'm') {
+        e.preventDefault();
+        if (WM.focused) WM.minimize(WM.focused);
+      }
+      // Escape → toggle launchpad (if no input focus)
+      if (e.key === 'Escape' && !e.target.matches('input, textarea')) {
+        WM.toggleLaunchpad();
+      }
+    });
+
+    // Click on desktop (empty area) → toggle launchpad
+    document.querySelector('.desktop').addEventListener('click', () => {
+      if (document.getElementById('launchpad').classList.contains('hidden')) {
+        WM.showLaunchpad();
+      }
+    });
+  </script>
 </body>
 </html>
