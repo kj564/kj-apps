@@ -277,7 +277,7 @@
       "en_EN": "WordCraft"
     },
     "description": {
-      "en_EN": "Open-source word processor with .docx support, ribbon UI, runs via WebAssembly"
+      "en_EN": "Open-source word processor with .docx support"
     },
     "files": [
       "main.js"
