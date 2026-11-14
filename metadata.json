@@ -289,5 +289,243 @@
     "files": [
       "main.js"
     ]
+  },
+  {
+    "name": "PhotoCraft",
+    "category": "graphics",
+    "icon": "icon.png",
+    "title": {
+      "en_EN": "PhotoCraft"
+    },
+    "description": {
+      "en_EN": "Open-source photo editor"
+    },
+    "files": [
+      "main.js"
+    ],
+    "mimes": [
+      "^text/html?"
+    ]
+  },
+  {
+    "name": "PdfCraft",
+    "category": "office",
+    "icon": "icon.png",
+    "title": {
+      "en_EN": "PdfCraft"
+    },
+    "description": {
+      "en_EN": "Open-source PDF reader and editor"
+    },
+    "files": [
+      "main.js"
+    ],
+    "mimes": [
+      "^text/html?"
+    ]
+  },
+  {
+    "name": "FilmCraft",
+    "category": "multimedia",
+    "icon": "icon.png",
+    "title": {
+      "en_EN": "FilmCraft"
+    },
+    "description": {
+      "en_EN": "Open-source nonlinear video editor"
+    },
+    "files": [
+      "main.js"
+    ],
+    "mimes": [
+      "^text/html?"
+    ]
+  },
+  {
+    "name": "GridCraft",
+    "category": "office",
+    "icon": "icon.png",
+    "title": {
+      "en_EN": "GridCraft"
+    },
+    "description": {
+      "en_EN": "Open-source spreadsheet"
+    },
+    "files": [
+      "main.js"
+    ],
+    "mimes": [
+      "^text/html?"
+    ]
+  },
+  {
+    "name": "CADCraft",
+    "category": "graphics",
+    "icon": "icon.png",
+    "title": {
+      "en_EN": "CADCraft"
+    },
+    "description": {
+      "en_EN": "Open-source CAD application"
+    },
+    "files": [
+      "main.js"
+    ],
+    "mimes": [
+      "^text/html?"
+    ]
+  },
+  {
+    "name": "EffectCraft",
+    "category": "graphics",
+    "icon": "icon.png",
+    "title": {
+      "en_EN": "EffectCraft"
+    },
+    "description": {
+      "en_EN": "Open-source motion graphics and compositing"
+    },
+    "files": [
+      "main.js"
+    ],
+    "mimes": [
+      "^text/html?"
+    ]
+  },
+  {
+    "name": "LightCraft",
+    "category": "graphics",
+    "icon": "icon.png",
+    "title": {
+      "en_EN": "LightCraft"
+    },
+    "description": {
+      "en_EN": "Open-source non-destructive photo editor"
+    },
+    "files": [
+      "main.js"
+    ],
+    "mimes": [
+      "^text/html?"
+    ]
+  },
+  {
+    "name": "DesignCraft",
+    "category": "graphics",
+    "icon": "icon.png",
+    "title": {
+      "en_EN": "DesignCraft"
+    },
+    "description": {
+      "en_EN": "Open-source page and layout design editor"
+    },
+    "files": [
+      "main.js"
+    ],
+    "mimes": [
+      "^text/html?"
+    ]
+  },
+  {
+    "name": "DeckCraft",
+    "category": "office",
+    "icon": "icon.png",
+    "title": {
+      "en_EN": "DeckCraft"
+    },
+    "description": {
+      "en_EN": "Open-source presentation and slide shows"
+    },
+    "files": [
+      "main.js"
+    ],
+    "mimes": [
+      "^text/html?"
+    ]
+  },
+  {
+    "name": "SoundCraft",
+    "category": "multimedia",
+    "icon": "icon.png",
+    "title": {
+      "en_EN": "SoundCraft"
+    },
+    "description": {
+      "en_EN": "Open-source digital audio workstation (DAW)"
+    },
+    "files": [
+      "main.js"
+    ],
+    "mimes": [
+      "^text/html?"
+    ]
+  },
+  {
+    "name": "FigCraft",
+    "category": "graphics",
+    "icon": "icon.png",
+    "title": {
+      "en_EN": "FigCraft"
+    },
+    "description": {
+      "en_EN": "Open-source interface design and prototyping"
+    },
+    "files": [
+      "main.js"
+    ],
+    "mimes": [
+      "^text/html?"
+    ]
+  },
+  {
+    "name": "VectorCraft",
+    "category": "graphics",
+    "icon": "icon.png",
+    "title": {
+      "en_EN": "VectorCraft"
+    },
+    "description": {
+      "en_EN": "Open-source vector art tool"
+    },
+    "files": [
+      "main.js"
+    ],
+    "mimes": [
+      "^text/html?"
+    ]
+  },
+  {
+    "name": "TextureCraft",
+    "category": "graphics",
+    "icon": "icon.png",
+    "title": {
+      "en_EN": "TextureCraft"
+    },
+    "description": {
+      "en_EN": "Open-source 3D texture painting"
+    },
+    "files": [
+      "main.js"
+    ],
+    "mimes": [
+      "^text/html?"
+    ]
+  },
+  {
+    "name": "MaterialCraft",
+    "category": "graphics",
+    "icon": "icon.png",
+    "title": {
+      "en_EN": "MaterialCraft"
+    },
+    "description": {
+      "en_EN": "Open-source node-based material designer"
+    },
+    "files": [
+      "main.js"
+    ],
+    "mimes": [
+      "^text/html?"
+    ]
   }
 ]
