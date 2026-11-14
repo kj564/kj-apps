@@ -246,6 +246,7 @@
             if (win) {
               const title = win.querySelector('.osjs-window-title')?.textContent || '';
               patchIframe(node, title);
+              setWindowDimensions(win, title);
             }
           }
 
@@ -257,6 +258,7 @@
               if (win) {
                 const title = win.querySelector('.osjs-window-title')?.textContent || '';
                 patchIframe(iframe, title);
+                setWindowDimensions(win, title);
               }
             });
           }
@@ -273,55 +275,35 @@
       });
     }
 
-    // ─── 9. Patch OS.js createWindow to set proper dimensions ─
-    // Wait for OS.js to be ready
-    function patchCreateWindow() {
-      if (!window.OSjs || !OSjs.make) {
-        setTimeout(patchCreateWindow, 100);
-        return;
-      }
+    // ─── 9. Set window dimensions (via MutationObserver, not OSjs.run patch) ─
+    function setWindowDimensions(win, appName) {
+      if (!win || win.dataset.kjDimSet) return;
+      const dims = APP_DIMENSIONS[appName];
+      if (!dims) return;
 
-      try {
-        // Hook into app launch to set dimensions
-        const origRun = OSjs.run;
-        if (origRun && !origRun._kjPatched) {
-          OSjs.run = function(appName) {
-            const result = origRun.apply(this, arguments);
+      win.dataset.kjDimSet = '1';
 
-            // After a short delay, patch the window dimensions
-            setTimeout(() => {
-              const windows = document.querySelectorAll('.osjs-window:not(.osjs-dialog)');
-              windows.forEach(win => {
-                const title = win.querySelector('.osjs-window-title')?.textContent || '';
-                const dims = APP_DIMENSIONS[title];
-                if (dims && !win.dataset.kjDimSet) {
-                  win.dataset.kjDimSet = '1';
-                  win.style.width = dims.width + 'px';
-                  win.style.height = dims.height + 'px';
-                  // Center the window
-                  const left = Math.max(20, (window.innerWidth - dims.width) / 2);
-                  const top = Math.max(40, (window.innerHeight - dims.height) / 2);
-                  win.style.left = left + 'px';
-                  win.style.top = top + 'px';
+      // Use requestAnimationFrame to ensure DOM is settled
+      requestAnimationFrame(() => {
+        win.style.width = dims.width + 'px';
+        win.style.height = dims.height + 'px';
 
-                  // Patch iframe in this window
-                  const iframe = win.querySelector('iframe');
-                  if (iframe) patchIframe(iframe, title);
-                }
-              });
-            }, 100);
+        // Center the window
+        const left = Math.max(20, (window.innerWidth - dims.width) / 2);
+        const top = Math.max(40, (window.innerHeight - dims.height) / 2);
+        win.style.left = left + 'px';
+        win.style.top = top + 'px';
 
-            return result;
-          };
-          OSjs.run._kjPatched = true;
-          console.log('[KJ Bridge] Native integration active — apps will run with full permissions');
+        // Also try to resize the inner content area
+        const content = win.querySelector('.osjs-window-content');
+        if (content) {
+          content.style.width = '100%';
+          content.style.height = '100%';
         }
-      } catch(e) {
-        console.error('[KJ Bridge] Patch error', e);
-      }
+      });
     }
 
-    patchCreateWindow();
+    console.log('[KJ Bridge] Native integration active — apps will run with full permissions');
 
     // ─── 10. Expose bridge API globally ───────────────────────
     window.KJ_Bridge = {
