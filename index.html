@@ -305,6 +305,86 @@
 
     console.log('[KJ Bridge] Native integration active — apps will run with full permissions');
 
+    // ─── 9b. Inject new apps into OS.js package registry at runtime ─
+    // OS.js bakes metadata into webpack bundle. New apps added after build
+    // need to be injected at runtime. This fetches metadata.json and registers
+    // any apps that OS.js doesn't know about yet.
+    function injectRuntimeApps() {
+      if (!window.OSjs || !OSjs.make) {
+        setTimeout(injectRuntimeApps, 200);
+        return;
+      }
+
+      fetch('./metadata.json?v=' + Date.now(), { cache: 'no-store' })
+        .then(r => r.json())
+        .then(metadata => {
+          try {
+            const packages = OSjs.make('osjs/packages');
+            if (!packages) {
+              console.log('[KJ Bridge] osjs/packages not ready, retrying...');
+              setTimeout(injectRuntimeApps, 500);
+              return;
+            }
+
+            let injected = 0;
+            metadata.forEach(app => {
+              // Skip system packages (sounds, icons, themes)
+              if (!app.files || app.files.length === 0) return;
+              if (app.type === 'sounds' || app.type === 'icons' || app.type === 'theme') return;
+
+              // Check if already registered
+              const existing = packages.packages || packages._packages || [];
+              let alreadyExists = false;
+
+              // Try different ways to check existing packages
+              try {
+                if (typeof packages.has === 'function') {
+                  alreadyExists = packages.has(app.name);
+                } else if (Array.isArray(existing)) {
+                  alreadyExists = existing.some(p => p && p.name === app.name);
+                }
+              } catch(e) {}
+
+              if (!alreadyExists) {
+                // Inject the app metadata
+                try {
+                  if (typeof packages.add === 'function') {
+                    packages.add(app);
+                    injected++;
+                  } else if (typeof packages.register === 'function') {
+                    packages.register(app);
+                    injected++;
+                  } else {
+                    // Direct array push if internal structure allows
+                    if (packages.packages && Array.isArray(packages.packages)) {
+                      packages.packages.push(app);
+                      injected++;
+                    } else if (packages._packages && Array.isArray(packages._packages)) {
+                      packages._packages.push(app);
+                      injected++;
+                    }
+                  }
+                } catch(e) {
+                  console.warn('[KJ Bridge] Could not inject ' + app.name + ':', e.message);
+                }
+              }
+            });
+
+            if (injected > 0) {
+              console.log('[KJ Bridge] Injected ' + injected + ' runtime apps into OS.js');
+            }
+          } catch(e) {
+            console.warn('[KJ Bridge] Package injection error:', e.message);
+          }
+        })
+        .catch(err => {
+          console.warn('[KJ Bridge] Could not fetch metadata.json:', err);
+        });
+    }
+
+    // Wait for OS.js to fully boot, then inject
+    setTimeout(injectRuntimeApps, 3000);
+
     // ─── 10. Expose bridge API globally ───────────────────────
     window.KJ_Bridge = {
       version: '1.0.0',
