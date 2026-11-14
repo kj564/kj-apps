@@ -5,7 +5,6 @@ use wasm_bindgen::JsCast;
 // Browser shell dengan tab bar, address bar, navigation, bookmarks.
 // Gecko engine diload via gecko.js (pre-compiled WASM dari HeyPuter/firefox-wasm)
 
-#![cfg(target_arch = "wasm32")]
 
 use eframe::egui;
 use std::collections::VecDeque;
@@ -332,7 +331,7 @@ fn main() {
 
     wasm_bindgen_futures::spawn_local(async {
         eframe::WebRunner::new()
-            .start("kj_surf_canvas", web_options, Box::new(|_cc| Ok(Box::new(KjSurf::new()))))
+            .start(kj_surf_canvas(), web_options, Box::new(|_cc| Ok(Box::new(KjSurf::new()))))
             .await
             .expect("failed to start eframe");
     });
