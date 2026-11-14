@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+  <title>KJ Surf</title>
+  <link rel="icon" href="./icon-48aacb69fd3dd382.png" integrity="sha384&#x2D;LsfYvTLu4thhH&#x2F;161sWGMPXjz&#x2F;th4t2uIV1uX6P&#x2F;nZf&#x2F;StLaAs5kT1&#x2F;dPvFLhXhg"/>
+  
+<script type="module" nonce="af4hAI3dIsJWSVrWbe8C7A==">
+import init, * as bindings from './kj-surf-17c7bf3658d901a5.js';
+const wasm = await init('./kj-surf-17c7bf3658d901a5_bg.wasm');
+
+
+window.wasmBindings = bindings;
+
+
+dispatchEvent(new CustomEvent("TrunkApplicationStarted", {detail: {wasm}}));
+
+</script>
+  <style>
+    html, body {
+      margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden;
+      background: #1a1a2e;
+    }
+    #kj_surf_canvas {
+      position: absolute; inset: 0;
+      width: 100%; height: 100%; display: block;
+    }
+    #kj_surf_loading {
+      position: absolute; inset: 0;
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      color: #e4e4e4; font: 14px system-ui, sans-serif;
+      pointer-events: none;
+      background: #1a1a2e;
+    }
+    #kj_surf_loading .logo {
+      width: 64px; height: 64px;
+      margin-bottom: 16px;
+      border-radius: 16px;
+      background: linear-gradient(135deg, #0f3460, #e94560);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 32px;
+    }
+  </style>
+<link rel="modulepreload" href="./kj-surf-17c7bf3658d901a5.js" crossorigin=anonymous integrity="sha384-JQMnqKjagULm73Ek0YSegn9MpPRGJU/1WC0qimCAQyglVt7GakpQZnvppq+prybG"><link rel="preload" href="./kj-surf-17c7bf3658d901a5_bg.wasm" crossorigin=anonymous integrity="sha384-7V/1PbVmoPdmKQ/frfQkEAomni7PQ/etexcD/dzqemit8RBpdCCN+5yMmy3e4cH0" as="fetch" type="application/wasm"></head>
+<body>
+  <canvas id="kj_surf_canvas"></canvas>
+  <div id="kj_surf_loading">
+    <div class="logo">🌐</div>
+    <div>Loading KJ Surf…</div>
+  </div>
+</body>
+</html>
