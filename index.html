@@ -306,8 +306,6 @@
     console.log('[KJ Bridge] Native integration active — apps will run with full permissions');
 
     // ─── 9b. Inject new apps into OS.js package registry at runtime ─
-    // OS.js bakes metadata into webpack bundle. New apps added after build
-    // need to be injected at runtime via addPackages().
     function injectRuntimeApps() {
       if (!window.OSjs || !OSjs.make) {
         setTimeout(injectRuntimeApps, 200);
@@ -330,29 +328,33 @@
       fetch('./metadata.json?v=' + Date.now(), { cache: 'no-store' })
         .then(r => r.json())
         .then(metadata => {
-          const existing = packages.getPackages ? packages.getPackages() : [];
-          const existingNames = existing.map(p => p.name);
+          let injected = 0;
+          let skipped = 0;
 
-          const newApps = metadata.filter(app => {
-            if (!app.files || app.files.length === 0) return false;
-            if (app.type === 'sounds' || app.type === 'icons' || app.type === 'theme') return false;
-            return !existingNames.includes(app.name);
+          metadata.forEach(app => {
+            if (!app.files || app.files.length === 0) return;
+            if (app.type === 'sounds' || app.type === 'icons' || app.type === 'theme') return;
+
+            // Try to inject — addPackages throws if already exists
+            try {
+              packages.addPackages([{
+                type: 'application',
+                name: app.name,
+                category: app.category || 'utilities',
+                icon: app.icon || 'icon.png',
+                title: app.title || {en_EN: app.name},
+                description: app.description || {en_EN: app.name},
+                files: app.files.map(f => ({filename: f, type: 'preload'})),
+                mimes: app.mimes || []
+              }]);
+              injected++;
+            } catch(e) {
+              skipped++;
+            }
           });
 
-          if (newApps.length > 0) {
-            const formatted = newApps.map(app => ({
-              type: 'application',
-              name: app.name,
-              category: app.category || 'utilities',
-              icon: app.icon || 'icon.png',
-              title: app.title || {en_EN: app.name},
-              description: app.description || {en_EN: app.name},
-              files: app.files.map(f => ({filename: f, type: 'preload'})),
-              mimes: app.mimes || []
-            }));
-
-            packages.addPackages(formatted);
-            console.log('[KJ Bridge] Injected ' + formatted.length + ' runtime apps: ' + formatted.map(a => a.name).join(', '));
+          if (injected > 0) {
+            console.log('[KJ Bridge] Injected ' + injected + ' new apps, ' + skipped + ' already registered');
           }
         })
         .catch(err => console.warn('[KJ Bridge] metadata fetch error:', err));
