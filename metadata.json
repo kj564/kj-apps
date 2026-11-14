@@ -527,5 +527,22 @@
     "mimes": [
       "^text/html?"
     ]
+  },
+  {
+    "name": "Browser",
+    "category": "network",
+    "icon": "icon.png",
+    "title": {
+      "en_EN": "Browser"
+    },
+    "description": {
+      "en_EN": "Web browser \u2014 surf the internet"
+    },
+    "files": [
+      "main.js"
+    ],
+    "mimes": [
+      "^text/html?"
+    ]
   }
 ]
