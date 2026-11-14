@@ -1,4 +1,5 @@
 // KJ Surf — Browser orisinil berbasis Gecko engine
+use wasm_bindgen::JsCast;
 // Arsitektur: Rust + egui + WASM (sama seperti ArtCraft)
 //
 // Browser shell dengan tab bar, address bar, navigation, bookmarks.
@@ -314,6 +315,14 @@ impl eframe::App for KjSurf {
 }
 
 // ─── WASM entry point ──────────────────────────────────────────
+fn kj_surf_canvas() -> web_sys::HtmlCanvasElement {
+    web_sys::window()
+        .and_then(|w| w.document())
+        .and_then(|d| d.get_element_by_id("kj_surf_canvas"))
+        .and_then(|e| e.dyn_into::<web_sys::HtmlCanvasElement>().ok())
+        .expect("canvas #kj_surf_canvas not found")
+}
+
 fn main() {
     // For WASM target, use eframe web runner
     // This is the same pattern as WordCraft/ArtCraft apps
