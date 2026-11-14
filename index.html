@@ -3,15 +3,341 @@
   <head>
     <meta charset="utf-8" />
     <!--
-    OS.js - Copyright (c) 2011-2020
-    Anders Evenrud (andersevenrud@gmail.com)
+    KJ Apps — OS.js v3 with ArtCraft native integration
+    Based on OS.js by Anders Evenrud (andersevenrud@gmail.com)
     https://github.com/os-js/
     -->
     <meta name="google" content="notranslate" />
-    <meta name="description" content="OS.js - JavaScript Cloud/Web Desktop Platform" />
+    <meta name="description" content="KJ Apps — Web Desktop OS with ArtCraft creative tools" />
     <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no" />
-    <title>OS.js</title>
+    <title>KJ Apps</title>
   <link rel="shortcut icon" href="favicon.png"><link href="vendors-osjs.css" rel="stylesheet"><link href="osjs.css" rel="stylesheet"></head>
   <body>
-  <script type="text/javascript" src="vendors-osjs.js"></script><script type="text/javascript" src="osjs.js"></script></body>
+  <script type="text/javascript" src="vendors-osjs.js"></script><script type="text/javascript" src="osjs.js"></script>
+
+  <!-- ═══ ArtCraft Native Integration Bridge ═══ -->
+  <script>
+  (function() {
+    'use strict';
+
+    // ─── Config: Per-app window dimensions ────────────────────
+    const APP_DIMENSIONS = {
+      WordCraft:    { width: 1024, height: 720, minWidth: 600, minHeight: 400 },
+      PhotoCraft:   { width: 1280, height: 800, minWidth: 800, minHeight: 500 },
+      PdfCraft:     { width: 1024, height: 720, minWidth: 600, minHeight: 400 },
+      FilmCraft:    { width: 1280, height: 800, minWidth: 800, minHeight: 500 },
+      GridCraft:    { width: 1024, height: 720, minWidth: 600, minHeight: 400 },
+      CADCraft:     { width: 1280, height: 800, minWidth: 800, minHeight: 500 },
+      EffectCraft:  { width: 1280, height: 800, minWidth: 800, minHeight: 500 },
+      LightCraft:   { width: 1280, height: 800, minWidth: 800, minHeight: 500 },
+      DesignCraft:  { width: 1280, height: 800, minWidth: 800, minHeight: 500 },
+      DeckCraft:    { width: 1024, height: 720, minWidth: 600, minHeight: 400 },
+      SoundCraft:   { width: 1280, height: 800, minWidth: 800, minHeight: 500 },
+      FigCraft:     { width: 1280, height: 800, minWidth: 800, minHeight: 500 },
+      VectorCraft:  { width: 1280, height: 800, minWidth: 800, minHeight: 500 },
+      TextureCraft: { width: 1280, height: 800, minWidth: 800, minHeight: 500 },
+      MaterialCraft: { width: 1024, height: 720, minWidth: 600, minHeight: 400 },
+    };
+
+    // ─── Per-app iframe allow attributes ──────────────────────
+    const APP_ALLOW = {
+      // Most apps: clipboard + downloads + fullscreen + presentation
+      default: 'fullscreen; clipboard-read; clipboard-write; downloads; autoplay; encrypted-media; picture-in-picture',
+      // Sound/Film apps: also need microphone for recording
+      SoundCraft: 'fullscreen; clipboard-read; clipboard-write; downloads; autoplay; encrypted-media; microphone; picture-in-picture',
+      FilmCraft: 'fullscreen; clipboard-read; clipboard-write; downloads; autoplay; encrypted-media; microphone; camera; picture-in-picture',
+      // LightCraft/PhotoCraft: camera for photo capture
+      LightCraft: 'fullscreen; clipboard-read; clipboard-write; downloads; autoplay; encrypted-media; camera; picture-in-picture',
+      PhotoCraft: 'fullscreen; clipboard-read; clipboard-write; downloads; autoplay; encrypted-media; camera; picture-in-picture',
+    };
+
+    // ─── Keyboard shortcuts that should pass through to apps ──
+    // OS.js eats these by default; we let them through to the focused iframe
+    const PASSTHROUGH_KEYS = new Set([
+      's', 'c', 'v', 'x', 'a', 'z', 'y', 'p', 'f', 'b', 'i', 'o',
+      'n', 't', 'l', 'r', 'g', 'e', 'd', 'w', 'h',
+    ]);
+
+    // ─── 1. Patch iframe creation with proper attributes ──────
+    function patchIframe(iframe, appName) {
+      if (!iframe || iframe.dataset.kjPatched) return;
+      iframe.dataset.kjPatched = '1';
+
+      // Set allow attribute for native permissions
+      const allow = APP_ALLOW[appName] || APP_ALLOW.default;
+      iframe.setAttribute('allow', allow);
+
+      // No sandbox for same-origin apps = full native access
+      iframe.removeAttribute('sandbox');
+
+      // Allow fullscreen on the iframe element itself
+      iframe.allowFullscreen = true;
+
+      // Set up postMessage bridge for file operations
+      setupPostMessageBridge(iframe, appName);
+    }
+
+    // ─── 2. PostMessage bridge: WASM app ↔ OS.js ─────────────
+    function setupPostMessageBridge(iframe, appName) {
+      // Listen for messages from the iframe
+      window.addEventListener('message', function(event) {
+        if (event.source !== iframe.contentWindow) return;
+        const data = event.data;
+        if (!data || !data.type) return;
+
+        switch (data.type) {
+          case 'kj:saveFile':
+            // WASM app wants to save a file → route to OS.js VFS
+            handleFileSave(data, appName);
+            break;
+
+          case 'kj:notification':
+            // Show OS.js notification
+            if (window.OSjs && OSjs.make) {
+              try {
+                const notif = OSjs.make('osjs/notification');
+                if (notif) notif.create({ title: data.title || appName, message: data.message });
+              } catch(e) {}
+            }
+            break;
+
+          case 'kj:fullscreen':
+            // Toggle OS.js window maximize instead of browser fullscreen
+            toggleWindowFullscreen(iframe);
+            break;
+
+          case 'kj:ready':
+            // App signals it's ready
+            console.log('[KJ Bridge] ' + appName + ' is ready');
+            break;
+        }
+      });
+
+      // Send config to iframe when it loads
+      iframe.addEventListener('load', function() {
+        try {
+          iframe.contentWindow.postMessage({
+            type: 'kj:config',
+            app: appName,
+            os: 'kj-apps',
+            vfs: true,
+            notifications: true,
+            fullscreen: 'window'
+          }, '*');
+        } catch(e) {}
+      });
+    }
+
+    // ─── 3. File save handler → OS.js VFS ────────────────────
+    function handleFileSave(data, appName) {
+      try {
+        if (window.OSjs && OSjs.make) {
+          const vfs = OSjs.make('osjs/vfs');
+          if (vfs) {
+            // Save to home:/ directory in OS.js VFS
+            vfs.write({
+              path: 'home:/' + (data.filename || 'untitled'),
+              data: data.content || ''
+            }).then(() => {
+              console.log('[KJ Bridge] File saved to VFS: ' + data.filename);
+              // Notify the app
+              iframe.contentWindow.postMessage({
+                type: 'kj:saveResult',
+                success: true,
+                path: 'home:/' + (data.filename || 'untitled')
+              }, '*');
+            }).catch(err => {
+              console.error('[KJ Bridge] VFS save failed, fallback to download', err);
+              fallbackDownload(data);
+            });
+            return;
+          }
+        }
+      } catch(e) {
+        console.error('[KJ Bridge] VFS error', e);
+      }
+      // Fallback: browser download
+      fallbackDownload(data);
+    }
+
+    function fallbackDownload(data) {
+      const blob = new Blob([data.content || ''], { type: data.mime || 'application/octet-stream' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = data.filename || 'untitled';
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+
+    // ─── 4. Toggle window fullscreen (maximize) ──────────────
+    function toggleWindowFullscreen(iframe) {
+      const win = iframe.closest('.osjs-window');
+      if (!win) return;
+      // Find the maximize button and click it
+      const maxBtn = win.querySelector('.osjs-window-button[title="Maximize"], .osjs-window-button:nth-child(2)');
+      if (maxBtn) maxBtn.click();
+    }
+
+    // ─── 5. Keyboard shortcut passthrough ────────────────────
+    document.addEventListener('keydown', function(e) {
+      // Only passthrough when Ctrl/Cmd is held
+      if (!(e.ctrlKey || e.metaKey)) return;
+
+      const key = e.key.toLowerCase();
+      if (!PASSTHROUGH_KEYS.has(key)) return;
+
+      // Find the focused iframe (inside an OS.js window)
+      const activeWindow = document.querySelector('.osjs-window:not(.osjs-dialog)[style*="z-index"]');
+      if (!activeWindow) return;
+
+      const iframe = activeWindow.querySelector('iframe');
+      if (!iframe || !iframe.contentWindow) return;
+
+      // Check if focus is already in the iframe
+      const activeTag = document.activeElement?.tagName;
+      if (activeTag === 'IFRAME') {
+        // Focus is in iframe, let the event pass through naturally
+        // OS.js might still intercept — prevent that
+        e.stopPropagation();
+        return;
+      }
+
+      // Focus the iframe and forward the shortcut
+      iframe.focus();
+    }, true); // Capture phase to intercept before OS.js
+
+    // ─── 6. Focus management: click in iframe = focus window ─
+    document.addEventListener('mousedown', function(e) {
+      if (e.target.tagName === 'IFRAME') {
+        const win = e.target.closest('.osjs-window');
+        if (win) {
+          // Bring window to front
+          win.style.zIndex = '99999';
+          // Click the window to trigger OS.js focus
+          win.click();
+        }
+      }
+    }, true);
+
+    // ─── 7. Intercept download links from iframes ────────────
+    // Some WASM apps create <a download> links — intercept and route to VFS
+    document.addEventListener('click', function(e) {
+      const link = e.target.closest('a[download]');
+      if (!link) return;
+      // Check if it's inside an iframe
+      const iframe = e.target.closest('iframe') || (e.view && e.view.frameElement);
+      if (!iframe) return;
+
+      // Let the download proceed (browser download as fallback)
+      // In future: intercept and route to VFS
+    }, true);
+
+    // ─── 8. Auto-patch iframes when apps launch ───────────────
+    // Use MutationObserver to catch new iframes
+    const observer = new MutationObserver(function(mutations) {
+      mutations.forEach(mutation => {
+        mutation.addedNodes.forEach(node => {
+          if (node.nodeType !== 1) return;
+
+          // Check if it's an iframe
+          if (node.tagName === 'IFRAME') {
+            const win = node.closest('.osjs-window');
+            if (win) {
+              const title = win.querySelector('.osjs-window-title')?.textContent || '';
+              patchIframe(node, title);
+            }
+          }
+
+          // Check descendants for iframes
+          const iframes = node.querySelectorAll?.('iframe');
+          if (iframes) {
+            iframes.forEach(iframe => {
+              const win = iframe.closest('.osjs-window');
+              if (win) {
+                const title = win.querySelector('.osjs-window-title')?.textContent || '';
+                patchIframe(iframe, title);
+              }
+            });
+          }
+        });
+      });
+    });
+
+    // Start observing when DOM is ready
+    if (document.body) {
+      observer.observe(document.body, { childList: true, subtree: true });
+    } else {
+      document.addEventListener('DOMContentLoaded', () => {
+        observer.observe(document.body, { childList: true, subtree: true });
+      });
+    }
+
+    // ─── 9. Patch OS.js createWindow to set proper dimensions ─
+    // Wait for OS.js to be ready
+    function patchCreateWindow() {
+      if (!window.OSjs || !OSjs.make) {
+        setTimeout(patchCreateWindow, 100);
+        return;
+      }
+
+      try {
+        // Hook into app launch to set dimensions
+        const origRun = OSjs.run;
+        if (origRun && !origRun._kjPatched) {
+          OSjs.run = function(appName) {
+            const result = origRun.apply(this, arguments);
+
+            // After a short delay, patch the window dimensions
+            setTimeout(() => {
+              const windows = document.querySelectorAll('.osjs-window:not(.osjs-dialog)');
+              windows.forEach(win => {
+                const title = win.querySelector('.osjs-window-title')?.textContent || '';
+                const dims = APP_DIMENSIONS[title];
+                if (dims && !win.dataset.kjDimSet) {
+                  win.dataset.kjDimSet = '1';
+                  win.style.width = dims.width + 'px';
+                  win.style.height = dims.height + 'px';
+                  // Center the window
+                  const left = Math.max(20, (window.innerWidth - dims.width) / 2);
+                  const top = Math.max(40, (window.innerHeight - dims.height) / 2);
+                  win.style.left = left + 'px';
+                  win.style.top = top + 'px';
+
+                  // Patch iframe in this window
+                  const iframe = win.querySelector('iframe');
+                  if (iframe) patchIframe(iframe, title);
+                }
+              });
+            }, 100);
+
+            return result;
+          };
+          OSjs.run._kjPatched = true;
+          console.log('[KJ Bridge] Native integration active — apps will run with full permissions');
+        }
+      } catch(e) {
+        console.error('[KJ Bridge] Patch error', e);
+      }
+    }
+
+    patchCreateWindow();
+
+    // ─── 10. Expose bridge API globally ───────────────────────
+    window.KJ_Bridge = {
+      version: '1.0.0',
+      apps: Object.keys(APP_DIMENSIONS),
+      saveFile: handleFileSave,
+      notify: function(title, message) {
+        try {
+          if (window.OSjs && OSjs.make) {
+            const n = OSjs.make('osjs/notification');
+            if (n) n.create({ title, message });
+          }
+        } catch(e) {}
+      }
+    };
+  })();
+  </script>
+  </body>
 </html>
