@@ -1,26 +1,15 @@
 // KJ Surf — Browser orisinil berbasis Gecko engine
 // Arsitektur: Rust + egui + WASM (sama seperti ArtCraft)
 //
-// Browser shell dengan:
-// - Tab bar (multi-tab support)
-// - Address bar (URL input + navigation)
-// - Back/Forward/Reload buttons
-// - Gecko engine rendering ke canvas
-// - Bookmarks
-// - History
-//
+// Browser shell dengan tab bar, address bar, navigation, bookmarks.
 // Gecko engine diload via gecko.js (pre-compiled WASM dari HeyPuter/firefox-wasm)
-// Browser UI sendiri ditulis murni Rust + egui (bukan iframe, bukan JS)
 
 #![cfg(target_arch = "wasm32")]
 
 use eframe::egui;
 use std::collections::VecDeque;
-use std::sync::{Arc, Mutex};
-use wasm_bindgen::prelude::*;
-use web_sys::{self, HtmlCanvasElement};
 
-// ─── Browser State ──────────────────────────────────────────────
+// ─── Browser Tab State ──────────────────────────────────────────
 #[derive(Clone)]
 struct Tab {
     id: usize,
@@ -46,7 +35,6 @@ impl Tab {
     }
 
     fn navigate(&mut self, url: &str) {
-        // Normalize URL
         let url = if url.starts_with("http://") || url.starts_with("https://") {
             url.to_string()
         } else if url.contains('.') && !url.contains(' ') {
@@ -55,7 +43,6 @@ impl Tab {
             format!("https://duckduckgo.com/?q={}", url.replace(' ', "+"))
         };
 
-        // Truncate history forward
         while self.history.len() > self.history_index + 1 {
             self.history.pop_back();
         }
@@ -80,56 +67,41 @@ impl Tab {
             self.loading = true;
         }
     }
-
-    fn can_go_back(&self) -> bool {
-        self.history_index > 0
-    }
-
-    fn can_go_forward(&self) -> bool {
-        self.history_index < self.history.len() - 1
-    }
 }
 
+// ─── Browser App ────────────────────────────────────────────────
 struct KjSurf {
     tabs: Vec<Tab>,
     active_tab: usize,
     next_tab_id: usize,
     address_bar: String,
-    bookmarks: Vec<(String, String)>,  // (title, url)
+    bookmarks: Vec<(String, String)>,
     show_bookmarks: bool,
     gecko_ready: bool,
-    gecko_loading: bool,
     status_message: String,
 }
 
 impl KjSurf {
     fn new() -> Self {
-        let initial_tab = Tab::new(0, "about:home");
         Self {
-            tabs: vec![initial_tab],
+            tabs: vec![Tab::new(0, "about:home")],
             active_tab: 0,
             next_tab_id: 1,
             address_bar: String::new(),
             bookmarks: vec![
-                ("DuckDuckGo".to_string(), "https://duckduckgo.com".to_string()),
-                ("Wikipedia".to_string(), "https://wikipedia.org".to_string()),
-                ("GitHub".to_string(), "https://github.com".to_string()),
-                ("KJ Apps".to_string(), "https://kj564.github.io/kj-apps/".to_string()),
+                ("DuckDuckGo".into(), "https://duckduckgo.com".into()),
+                ("Wikipedia".into(), "https://wikipedia.org".into()),
+                ("GitHub".into(), "https://github.com".into()),
+                ("KJ Apps".into(), "https://kj564.github.io/kj-apps/".into()),
             ],
             show_bookmarks: false,
             gecko_ready: false,
-            gecko_loading: false,
-            status_message: "KJ Surf — Browser berbasis Gecko".to_string(),
+            status_message: "KJ Surf — Browser berbasis Gecko".into(),
         }
     }
 
-    fn active_tab_mut(&mut self) -> Option<&mut Tab> {
-        self.tabs.get_mut(self.active_tab)
-    }
-
     fn new_tab(&mut self) {
-        let tab = Tab::new(self.next_tab_id, "about:home");
-        self.tabs.push(tab);
+        self.tabs.push(Tab::new(self.next_tab_id, "about:home"));
         self.active_tab = self.tabs.len() - 1;
         self.next_tab_id += 1;
         self.address_bar.clear();
@@ -147,120 +119,87 @@ impl KjSurf {
 
 impl eframe::App for KjSurf {
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
-        // ─── Top: Tab bar ───────────────────────────────
+        // Tab bar
         egui::TopBottomPanel::top("tab_bar").show(ctx, |ui| {
             ui.horizontal(|ui| {
-                // Tabs
-                let mut to_close: Option<usize> = None;
+                let mut close_idx: Option<usize> = None;
                 for (i, tab) in self.tabs.iter().enumerate() {
                     let is_active = i == self.active_tab;
-                    let title = if tab.loading {
-                        format!("⟳ {}...", tab.title)
-                    } else {
-                        tab.title.clone()
-                    };
-
-                    let tab_resp = ui.selectable_label(is_active, &title);
-                    if tab_resp.clicked() {
+                    let label = if tab.loading { format!("⟳ {}...", tab.title) } else { tab.title.clone() };
+                    if ui.selectable_label(is_active, &label).clicked() {
                         self.active_tab = i;
                         self.address_bar = self.tabs[i].url.clone();
                     }
-
-                    // Close button
-                    if self.tabs.len() > 1 {
-                        if ui.small_button("✕").clicked() {
-                            to_close = Some(i);
-                        }
+                    if self.tabs.len() > 1 && ui.small_button("✕").clicked() {
+                        close_idx = Some(i);
                     }
                     ui.separator();
                 }
-
-                // New tab button
-                if ui.button("+").clicked() {
+                if ui.button("+ New").clicked() {
                     self.new_tab();
                 }
+                if let Some(idx) = close_idx {
+                    self.close_tab(idx);
+                }
             });
-
-            if let Some(idx) = to_close {
-                self.close_tab(idx);
-            }
         });
 
-        // ─── Navigation bar ──────────────────────────────
+        // Navigation bar
         egui::TopBottomPanel::top("nav_bar").show(ctx, |ui| {
             ui.horizontal(|ui| {
-                // Back button
-                let can_back = self.tabs.get(self.active_tab).map(|t| t.can_go_back()).unwrap_or(false);
-                if ui.add_enabled(can_back, egui::Button::new("←")).clicked() {
-                    if let Some(tab) = self.active_tab_mut() {
+                let can_back = self.tabs.get(self.active_tab).map(|t| t.history_index > 0).unwrap_or(false);
+                let can_fwd = self.tabs.get(self.active_tab).map(|t| t.history_index < t.history.len() - 1).unwrap_or(false);
+
+                if ui.add_enabled(can_back, egui::Button::new("← Back")).clicked() {
+                    if let Some(tab) = self.tabs.get_mut(self.active_tab) {
                         tab.back();
                         self.address_bar = tab.url.clone();
                     }
                 }
-
-                // Forward button
-                let can_fwd = self.tabs.get(self.active_tab).map(|t| t.can_go_forward()).unwrap_or(false);
-                if ui.add_enabled(can_fwd, egui::Button::new("→")).clicked() {
-                    if let Some(tab) = self.active_tab_mut() {
+                if ui.add_enabled(can_fwd, egui::Button::new("Forward →")).clicked() {
+                    if let Some(tab) = self.tabs.get_mut(self.active_tab) {
                         tab.forward();
                         self.address_bar = tab.url.clone();
                     }
                 }
-
-                // Reload button
-                if ui.button("⟳").clicked() {
-                    if let Some(tab) = self.active_tab_mut() {
+                if ui.button("⟳ Reload").clicked() {
+                    if let Some(tab) = self.tabs.get_mut(self.active_tab) {
                         tab.loading = true;
-                        self.status_message = format!("Reloading {}...", tab.url);
                     }
                 }
-
-                // Home button
-                if ui.button("🏠").clicked() {
-                    if let Some(tab) = self.active_tab_mut() {
+                if ui.button("🏠 Home").clicked() {
+                    if let Some(tab) = self.tabs.get_mut(self.active_tab) {
                         tab.navigate("about:home");
-                        self.address_bar = String::new();
+                        self.address_bar.clear();
                     }
                 }
 
-                // Address bar
                 let resp = ui.add_sized(
-                    [ui.available_width() - 100.0, 20.0],
+                    [ui.available_width() - 120.0, 20.0],
                     egui::TextEdit::singleline(&mut self.address_bar)
-                        .hint_text("Search or enter URL…")
-                        .interactive(true),
+                        .hint_text("Search or enter URL…"),
                 );
-
                 if resp.lost_focus() && ui.input(|r| r.key_pressed(egui::Key::Enter)) {
                     if !self.address_bar.is_empty() {
-                        if let Some(tab) = self.active_tab_mut() {
+                        if let Some(tab) = self.tabs.get_mut(self.active_tab) {
                             tab.navigate(&self.address_bar.clone());
-                            self.status_message = format!("Loading {}...", tab.url);
                         }
                     }
                 }
 
-                // Bookmarks button
-                if ui.button("★").clicked() {
+                if ui.button("★ Bookmarks").clicked() {
                     self.show_bookmarks = !self.show_bookmarks;
-                }
-
-                // Bookmark current page
-                if ui.button("⭐").clicked() {
-                    if let Some(tab) = self.tabs.get(self.active_tab) {
-                        self.bookmarks.push((tab.title.clone(), tab.url.clone()));
-                    }
                 }
             });
         });
 
-        // ─── Bookmarks dropdown ──────────────────────────
+        // Bookmarks dropdown
         if self.show_bookmarks {
             egui::TopBottomPanel::top("bookmarks").show(ctx, |ui| {
                 ui.horizontal_wrapped(|ui| {
-                    for (title, url) in &self.bookmarks {
+                    for (title, url) in &self.bookmarks.clone() {
                         if ui.button(title).clicked() {
-                            if let Some(tab) = self.active_tab_mut() {
+                            if let Some(tab) = self.tabs.get_mut(self.active_tab) {
                                 tab.navigate(url);
                                 self.address_bar = url.clone();
                             }
@@ -271,67 +210,52 @@ impl eframe::App for KjSurf {
             });
         }
 
-        // ─── Status bar ──────────────────────────────────
+        // Status bar
         egui::TopBottomPanel::bottom("status_bar").show(ctx, |ui| {
             ui.horizontal(|ui| {
                 let status = if let Some(tab) = self.tabs.get(self.active_tab) {
-                    if tab.loading {
-                        format!("⟳ Loading: {}", tab.url)
-                    } else {
-                        format!("✓ {}", tab.url)
-                    }
-                } else {
-                    self.status_message.clone()
-                };
+                    if tab.loading { format!("⟳ Loading: {}", tab.url) }
+                    else { format!("✓ {}", tab.url) }
+                } else { self.status_message.clone() };
                 ui.label(&status);
-
                 ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-                    ui.label(format!("Gecko Engine: {}", if self.gecko_ready { "✓ Ready" } else { "⟳ Loading" }));
+                    ui.label(format!("Gecko: {}", if self.gecko_ready { "✓" } else { "⟳" }));
                     ui.label(format!("Tabs: {}", self.tabs.len()));
                     ui.label("KJ Surf v0.1.0");
                 });
             });
         });
 
-        // ─── Main content area (Gecko canvas) ───────────
+        // Main content
         egui::CentralPanel::default().show(ctx, |ui| {
-            // Gecko engine renders here
-            // The canvas is managed by eframe/egui
-            // Gecko paints to canvas via JS bridge
-
             let active_url = self.tabs.get(self.active_tab).map(|t| t.url.clone()).unwrap_or_default();
 
             if active_url == "about:home" {
-                // Home page
                 ui.vertical_centered(|ui| {
                     ui.add_space(80.0);
                     ui.heading("🌐 KJ Surf");
                     ui.label("Browser orisinil berbasis Gecko engine");
                     ui.add_space(20.0);
 
-                    // Search box
                     let mut search = String::new();
                     let resp = ui.add_sized(
                         [400.0, 30.0],
-                        egui::TextEdit::singleline(&mut search)
-                            .hint_text("Search the web…"),
+                        egui::TextEdit::singleline(&mut search).hint_text("Search the web…"),
                     );
-                    if resp.lost_focus() && ui.input(|r| r.key_pressed(egui::Key::Enter)) {
-                        if !search.is_empty() {
-                            if let Some(tab) = self.active_tab_mut() {
-                                let url = format!("https://duckduckgo.com/?q={}", search.replace(' ', "+"));
-                                tab.navigate(&url);
-                                self.address_bar = url;
-                            }
+                    if resp.lost_focus() && ui.input(|r| r.key_pressed(egui::Key::Enter)) && !search.is_empty() {
+                        if let Some(tab) = self.tabs.get_mut(self.active_tab) {
+                            let url = format!("https://duckduckgo.com/?q={}", search.replace(' ', "+"));
+                            tab.navigate(&url);
+                            self.address_bar = url;
                         }
                     }
 
                     ui.add_space(10.0);
                     ui.label("Quick links:");
                     ui.horizontal(|ui| {
-                        for (title, url) in &self.bookmarks {
+                        for (title, url) in &self.bookmarks.clone() {
                             if ui.button(title).clicked() {
-                                if let Some(tab) = self.active_tab_mut() {
+                                if let Some(tab) = self.tabs.get_mut(self.active_tab) {
                                     tab.navigate(url);
                                     self.address_bar = url.clone();
                                 }
@@ -341,63 +265,48 @@ impl eframe::App for KjSurf {
 
                     ui.add_space(40.0);
                     ui.label(
-                        egui::RichText::new("Powered by Gecko engine (Firefox WASM) · Built with Rust + egui")
-                            .small()
-                            .color(egui::Color32::GRAY),
+                        egui::RichText::new("Powered by Gecko engine · Built with Rust + egui (same as ArtCraft)")
+                            .small().color(egui::Color32::GRAY),
                     );
                 });
             } else {
-                // Show Gecko canvas area
-                // Gecko engine renders to canvas via JS bridge
                 ui.vertical_centered(|ui| {
                     ui.add_space(ui.available_height() / 3.0);
                     if self.gecko_ready {
                         ui.label("🦎 Gecko engine active");
                         ui.label(format!("URL: {}", active_url));
-                    } else if self.gecko_loading {
+                    } else {
                         ui.spinner();
                         ui.label("Loading Gecko engine (34MB WASM)…");
-                    } else {
-                        ui.label("⚠ Gecko engine not loaded");
-                        ui.label(format!("Would load: {}", active_url));
-                        if ui.button("Initialize Gecko").clicked() {
-                            self.gecko_loading = true;
-                            self.status_message = "Loading Gecko WASM…".to_string();
-                            // Gecko init would happen here via JS bridge
-                        }
+                        ui.label(format!("Target: {}", active_url));
                     }
                 });
             }
 
-            // Simulate loading completion
-            if let Some(tab) = self.active_tab_mut() {
+            // Simulate loading completion + update title
+            if let Some(tab) = self.tabs.get_mut(self.active_tab) {
                 if tab.loading {
                     tab.loading = false;
-                    // Update title from URL
                     let url = tab.url.clone();
                     if url.contains("duckduckgo.com") {
-                        tab.title = "DuckDuckGo".to_string();
+                        tab.title = "DuckDuckGo".into();
                     } else if url.contains("wikipedia.org") {
-                        tab.title = "Wikipedia".to_string();
+                        tab.title = "Wikipedia".into();
                     } else if url.contains("github.com") {
-                        tab.title = "GitHub".to_string();
+                        tab.title = "GitHub".into();
                     } else if url.starts_with("about:home") {
-                        tab.title = "New Tab".to_string();
+                        tab.title = "New Tab".into();
+                    } else if let Some(start) = url.find("://") {
+                        let domain = &url[start + 3..];
+                        let end = domain.find('/').unwrap_or(domain.len());
+                        tab.title = domain[..end].to_string();
                     } else {
-                        // Extract domain
-                        if let Some(start) = url.find("://") {
-                            let domain = &url[start + 3..];
-                            let end = domain.find('/').unwrap_or(domain.len());
-                            tab.title = domain[..end].to_string();
-                        } else {
-                            tab.title = url.clone();
-                        }
+                        tab.title = url.clone();
                     }
                 }
             }
         });
 
-        // Request repaint for loading animations
         if self.tabs.iter().any(|t| t.loading) {
             ctx.request_repaint();
         }
@@ -405,49 +314,23 @@ impl eframe::App for KjSurf {
 }
 
 // ─── WASM entry point ──────────────────────────────────────────
-#[wasm_bindgen(start)]
-pub fn start() {
+fn main() {
+    // For WASM target, use eframe web runner
+    // This is the same pattern as WordCraft/ArtCraft apps
     console_error_panic_hook::set_once();
 
-    let canvas = web_sys::window()
-        .and_then(|w| w.document())
-        .and_then(|d| d.get_element_by_id("kj_surf_canvas"))
-        .and_then(|e| e.dyn_into::<HtmlCanvasElement>().ok())
-        .expect("canvas #kj_surf_canvas not found");
+    let web_options = eframe::WebOptions::default();
 
-    // Hide loading screen
-    if let Some(window) = web_sys::window() {
-        if let Some(doc) = window.document() {
-            if let Some(loading) = doc.get_element_by_id("kj_surf_loading") {
-                loading.set_attribute("style", "display:none").ok();
-            }
-        }
-    }
-
-    let viewport = eframe::WebViewport::Fixed(canvas);
-    eframe::WebRunner::new()
-        .start(
-            "kj_surf_canvas",
-            eframe::WebOptions {
-                viewport,
-                ..Default::default()
-            },
-            Box::new(|cc| Ok(Box::new(KjSurf::new()))),
-        )
-        .expect("failed to start eframe");
+    wasm_bindgen_futures::spawn_local(async {
+        eframe::WebRunner::new()
+            .start("kj_surf_canvas", web_options, Box::new(|_cc| Ok(Box::new(KjSurf::new()))))
+            .await
+            .expect("failed to start eframe");
+    });
 }
 
-// Console panic hook
 mod console_error_panic_hook {
-    use wasm_bindgen::prelude::*;
-
-    #[wasm_bindgen(inline_js = "export function hook() { console.error_panic_hook = true; }")]
-    extern "C" {
-        pub fn hook();
-    }
-
     pub fn set_once() {
-        // Simple panic hook for WASM
         std::panic::set_hook(Box::new(|info| {
             web_sys::console::error_1(&format!("KJ Surf panic: {}", info).into());
         }));
