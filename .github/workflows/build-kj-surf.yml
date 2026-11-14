@@ -1,0 +1,47 @@
+name: Build KJ Surf (WASM)
+
+on:
+  push:
+    paths:
+      - 'kj-surf/**'
+      - '.github/workflows/build-kj-surf.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: wasm32-unknown-unknown
+
+      - name: Install trunk
+        run: |
+          wget -qO- https://github.com/trunk-rs/trunk/releases/download/v0.21.0/trunk-x86_64-unknown-linux-gnu.tar.gz | tar xz
+          sudo mv trunk /usr/local/bin/
+
+      - name: Build KJ Surf WASM
+        working-directory: kj-surf
+        run: trunk build --release
+
+      - name: Copy build to kj-surf-dist
+        run: |
+          cp -r kj-surf/dist/* kj-surf-dist/ 2>/dev/null || true
+          # If trunk dist is elsewhere, find it
+          find . -name "*.wasm" -path "*/kj-surf*" -exec cp {} kj-surf-dist/ \;
+
+      - name: Commit build artifacts
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add kj-surf-dist/
+          git commit -m "build: KJ Surf WASM (auto-built by CI)" || true
+          git push
